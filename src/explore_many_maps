@@ -1,0 +1,39 @@
+sort(lp_res[eligible_indices], rev = true)[1:n_seeds_to_try]
+
+n_seeds_to_try = 10
+seeds_to_try = eligible_indices[sortperm(lp_res[eligible_indices], rev = true)][1:n_seeds_to_try]
+
+tmp = DataFrame(name = names(MAP_prior_init.values, 1))
+
+tmp_mat = zeros(length(MAP_prior_init.values), length(seeds_to_try))
+
+
+for i in eachindex(seeds_to_try)
+    println(i)
+    Random.seed!(seeds_to_try[i])
+    tmp_mat[:, i] = optimize(my_model, MAP(), LBFGS(linesearch=LineSearches.BackTracking())).values.array
+end
+
+
+multiple_map_chains = Chains(transpose(tmp_mat), names(MAP_prior_init.values,1))
+multiple_map_gq = generated_quantities(my_model, multiple_map_chains)
+
+
+
+univariate_param_names = [:γ, :ν, :ϕ_cases, :ϕ_deaths, :ρ_death, :S_SEI, :I_EI, :σ_R0, :σ_IFR, :σ_α]
+time_varying_param_names = [:β_t_values, :R₀_t_values, :Rₜ_t_values, :IFR_t_values, :α_t_values, :S, :E, :I, :R, :D, :deaths_mean, :cases_pos_mean, :cases_mean]
+
+function get_time_varying_param_chain(gq_chain, param_name)
+    l = length(gq_chain[1][Symbol(param_name)]) - 1
+    Chains(permutedims(reshape(hcat(getindex.(gq_chain, Symbol(param_name))...), l + 1, n_seeds_to_try), [2, 1]),
+    Symbol.(string.(string(param_name,"["), string.(0:l), "]")))
+  end
+
+
+multiple_map_gq_subchains = vcat(
+  Chains(permutedims(reinterpret(reshape, Float64, NamedTuple{Tuple(univariate_param_names)}.(multiple_map_gq)), [2, 1, 3]), univariate_param_names),
+  get_time_varying_param_chain.([multiple_map_gq], time_varying_param_names));
+
+multiple_map_gq_chains = Chains(cat(getfield.(multiple_map_gq_subchains, :value)..., dims = 2), vcat(names.(multiple_map_gq_subchains)...))
+
+CSV.write("multiple_map_gq_chains.csv", DataFrame(multiple_map_gq_chains))
