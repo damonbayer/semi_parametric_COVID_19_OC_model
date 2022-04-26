@@ -39,7 +39,7 @@ make_pp_plot <- function(path, n_forecast_times = 4) {
     unlist() %>%
     str_c(collapse = "\n")
   
-  pp <- read_csv(full_path)  
+  pp <- read_csv(path)  
   
   first_forecast_date <-
     pp$date %>%
@@ -69,4 +69,7 @@ make_pp_plot <- function(path, n_forecast_times = 4) {
 
 all_pp_plots <- map(dir_ls("results/tidy_posterior_predictive"), make_pp_plot)
 
-all_pp_plots[2]
+ggsave2(filename = "figures/all_pp_plots.pdf",
+        plot = marrangeGrob(all_pp_plots, nrow=1, ncol=1),
+        width = 8,
+        height = 8)
