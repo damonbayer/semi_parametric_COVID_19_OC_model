@@ -1,6 +1,6 @@
-authors = ["Damon Bayer <damon@damonbayer.com>"]
 name = "semi_parametric_COVID_19_OC_model"
 uuid = "9fef6ca4-3f8e-4dc1-a91c-f2020ecd4ce6"
+authors = ["Damon Bayer <damon@damonbayer.com>"]
 version = "0.1.0"
 
 [deps]
