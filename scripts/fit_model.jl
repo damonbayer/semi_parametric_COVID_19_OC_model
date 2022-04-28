@@ -28,15 +28,12 @@ half_S_0 = model_dict["half_S_0"]
 half_R0_0 = model_dict["half_R0_0"]
 
 ## Control Parameters
-# max_t_forecast = max_t + 4
 n_samples = 10_000
 
 ## Define Prior Constants
-# This should be differentiated for different models
 include(projectdir("src/prior_constants.jl"))
 
 ## Define Model
-# Should be differntiated for different models
 Turing.setadbackend(:forwarddiff)
 include(projectdir("src/seirdc_log_ode.jl"))
 
@@ -46,8 +43,6 @@ include(projectdir("src/bayes_seird.jl"))
 
 ## Create Models
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
-# my_model_forecast = bayes_seird(data_new_deaths_forecast, data_new_cases_forecast, tests_forecast, data_seroprev_cases, seroprev_tests, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
-# my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 MAP_init = optimize_many_MAP(my_model, 100, 4, true)
 
 if use_tests
