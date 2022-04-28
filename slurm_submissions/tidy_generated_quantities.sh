@@ -9,7 +9,7 @@
 #SBATCH -o tidy_generated_quantities-%A-%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=1-32
+#SBATCH --array=1-80
 
 module purge
 module load R
