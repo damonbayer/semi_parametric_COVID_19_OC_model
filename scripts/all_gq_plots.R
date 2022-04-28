@@ -34,14 +34,18 @@ read_gq_dir <- function(path) {
       name == "I" ~ "I",
       name == "I_EI" ~ "Init I / (E + I)",
       name == "IFR_t" ~ "IFR",
+      name == "IFR" ~ "IFR",
       name == "R" ~ "R",
       name == "R₀_t" ~ "R_0",
+      name == "R₀" ~ "R_0",
       name == "Rₜ_t" ~ "R_t",
       name == "S" ~ "S",
       name == "S_SEI" ~ "Init S / (S + E + I)",
       name == "seroprev_mean" ~ "Seroprev Mean",
       name == "α_t" ~ "\\alpha",
+      name == "α" ~ "\\alpha",
       name == "β_t" ~ "\\beta",
+      name == "β" ~ "\\beta",
       name == "ρ_cases_t" ~ "\\rho Cases",
       name == "ρ_death" ~ "\\rho Deaths",
       name == "σ_IFR" ~ "\\sigma IFR",
@@ -56,12 +60,11 @@ read_gq_dir <- function(path) {
 
 all_vector_gq <- read_gq_dir("results/tidy_vector_generated_quantities/")
 all_scalar_gq <- read_gq_dir("results/tidy_scalar_generated_quantities/")
- 
+
 all_vector_gq <- bind_rows(
   all_vector_gq,
   all_scalar_gq %>% 
     filter(name %in% c("α", "β", "R₀", "IFR")) %>% 
-    mutate(name = str_c(name, "_t")) %>% 
     right_join(distinct(all_vector_gq, model_design, date)) %>% 
     drop_na()
   )
@@ -71,7 +74,6 @@ all_scalar_gq <-
   filter(!(name %in% c("α", "β", "R₀", "IFR")))
 
 # Time Varying Plots ------------------------------------------------------
-
 make_time_varying_plot <- function(var_to_color) {
   all_vector_gq %>% 
     filter(max_t == 42) %>% 
