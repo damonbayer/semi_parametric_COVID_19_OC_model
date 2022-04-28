@@ -43,21 +43,23 @@ include(projectdir("src/bayes_seird.jl"))
 
 ## Create Models
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
-MAP_init = optimize_many_MAP(my_model, 100, 4, true)
+MAP_init = optimize_many_MAP(my_model, 10, 1, true)[1]
 
 if use_tests
-    alg = Gibbs(NUTS(1000, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
+    alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
         ESS(:R0_params_non_centered),
         ESS(:IFR_t_params_non_centered),
         ESS(:α_t_params_non_centered))
 else
-    alg = Gibbs(NUTS(1000, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
+    alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
         ESS(:R0_params_non_centered),
         ESS(:IFR_t_params_non_centered),
         ESS(:ρ_cases_t_params_non_centered))
 end
 
 Random.seed!(seed)
-posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thin = 5, init_params = MAP_init[seed] * 0.95)
+MAP_noise = randn(length(MAP_init))
+Random.seed!(seed)
+posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thin = 10, init_params = MAP_init * 0.95 + MAP_noise * 0.05)
 
 wsave(resultsdir("posterior_samples", savename("posterior_samples", model_dict, "jld2")), @dict posterior_samples)

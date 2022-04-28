@@ -136,9 +136,9 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
     tspan = (0.0, obstimes[end]))
 
   if extra_ode_precision
-    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-9, reltol = 1e-6)  
+    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-11, reltol = 1e-8)  
   else
-    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false)
+    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-9, reltol = 1e-6)  
   end
   
   # If the ODE solver fails, reject the sample by adding -Inf to the likelihood

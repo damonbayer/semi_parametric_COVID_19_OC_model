@@ -218,6 +218,7 @@ function optimize_many_MAP(model, n_reps = 100, top_n = 1, verbose = true)
       catch
       end
   end
+  println(lp_res)
   eligible_indices = findall(.!isnan.(lp_res) .& isfinite.(lp_res))
   best_n_seeds =  eligible_indices[sortperm(lp_res[eligible_indices], rev = true)][1:top_n]
   
