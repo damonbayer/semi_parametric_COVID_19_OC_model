@@ -22,6 +22,13 @@ dat_tidy <-
   select(-tests) %>% 
   pivot_longer(-date)
 
+time_interval_in_days <- as.numeric(dat$date[2] - dat$date[1])
+
+index_date_conversion <- 
+  dat %>% 
+  select(date, index) %>% 
+  add_row(date = dat$date[1] - time_interval_in_days, index = 0, .before = 1)
+
 
 make_pp_plot <- function(path, n_forecast_times = 4) {
   file_description <- 
