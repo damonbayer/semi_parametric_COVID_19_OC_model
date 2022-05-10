@@ -47,13 +47,13 @@ my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new
 MAP_init = optimize_many_MAP(my_model, 10, 1, true)[1]
 MAP_chain = Chains([MAP_init], flattened_varnames_list(my_model))
 
-
 Random.seed!(seed)
 data_chain = predict(my_model_forecast_missing, MAP_chain)
 
 
 mkpath(projectdir("data", "simulated_data"))
 CSV.write(projectdir("data", "simulated_data", savename("simulated_data", simulated_dict, "csv")), DataFrame(data_chain))
+CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))
 
 simulated_data_new_deaths = vcat(get(data_chain, :data_new_deaths)[:data_new_deaths]...)
 simulated_data_new_cases = vcat(get(data_chain, :data_new_cases)[:data_new_cases]...)
