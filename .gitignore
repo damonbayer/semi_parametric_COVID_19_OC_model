@@ -102,3 +102,5 @@ Temporary Items
 .apdisk
 
 results/*
+/data/simulated_data
+/illustrative_examples/age_structure/data
