@@ -9,7 +9,7 @@
 #SBATCH -o tidy_posterior_predictive-%A-%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=1-80
+#SBATCH --array=113-135
 
 module purge
 module load R

@@ -31,7 +31,17 @@ model_table <-
     # constant time-varying parameters
     tibble(constant_R0 = T),
     tibble(constant_alpha = T),
-    tibble(constant_IFR = T)
+    tibble(constant_IFR = T),
+    crossing(
+      use_tests = c(T,F),
+      max_t = 4:19,
+      use_seroprev = F
+    ),
+    crossing(
+      use_tests = F,
+      max_t = 20:42,
+      use_seroprev = F
+    ),
   ) %>%
   # replace missing values with defualts
   replace_na(list(
