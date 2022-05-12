@@ -29,6 +29,13 @@ half_R0_0 = false
 
 simulated_dict = @dict seed max_t use_tests use_seroprev constant_R0 constant_alpha constant_IFR double_IFR_0 half_alpha_0 half_S_0 half_R0_0
 
+if seed == 1
+    prior_samples_path = resultsdir("simulated_posterior_samples", savename("simulated_prior_samples", simulated_dict, "jld2"))
+    prior_samples = load(prior_samples_path)["prior_samples"]
+    prior_samples_summary = innerjoin(DataFrame.(describe(prior_samples, q = [0.1, 0.9]))..., on = :parameters)
+    CSV.write(replace(prior_samples_path, "simulated_prior_samples"=>"simulated_prior_samples_summary") |> x -> replace(x, "jld2"=>"csv"), prior_samples_summary)
+end
+
 posterior_samples_path = resultsdir("simulated_posterior_samples", savename("simulated_posterior_samples", simulated_dict, "jld2"))
 posterior_samples = load(posterior_samples_path)["posterior_samples"]
 
@@ -46,6 +53,12 @@ data_seroprev_cases = round.(Int, [data[1, "data_seroprev_cases[" * string(i) * 
 include(projectdir("src/bayes_seird.jl"))
 
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, true)
+
+if seed == 1
+    Random.seed!(1)
+    generated_quantities_prior = get_gq_chains(my_model, prior_samples)
+    CSV.write(replace(prior_samples_path, "simulated_prior_samples"=>"simulated_prior_generated_quantities_summary") |> x -> replace(x, "jld2"=>"csv"), generated_quantities_prior)
+end
 
 Random.seed!(1)
 generated_quantities = get_gq_chains(my_model, posterior_samples)

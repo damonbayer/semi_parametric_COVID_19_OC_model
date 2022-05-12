@@ -13,6 +13,8 @@ using FileIO
 using DrWatson
 using semi_parametric_COVID_19_OC_model
 
+mkpath(resultsdir("simulated_posterior_samples"))
+
 max_t = 42.0
 use_tests = true
 use_seroprev = true
@@ -64,6 +66,11 @@ simulated_data_seroprev_cases = vcat(get(data_chain, :data_seroprev_cases)[:data
 
 my_model_simulated = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, false)
 
+if seed == 1
+    prior_samples = sample(my_model_simulated, Prior(), MCMCThreads(), n_samples, n_chains)
+    wsave(resultsdir("simulated_posterior_samples", savename("simulated_prior_samples", simulated_dict, "jld2")), @dict prior_samples)
+end
+
 alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
     ESS(:R0_params_non_centered),
     ESS(:IFR_t_params_non_centered),
@@ -77,5 +84,4 @@ MAP_noise = [randn(length(MAP_init)) for x in 1:n_chains]
 Random.seed!(seed)
 posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([simulated_MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
 
-mkpath(resultsdir("simulated_posterior_samples"))
 wsave(resultsdir("simulated_posterior_samples", savename("simulated_posterior_samples", simulated_dict, "jld2")), @dict posterior_samples)
