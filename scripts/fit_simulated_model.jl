@@ -67,6 +67,12 @@ simulated_data_seroprev_cases = vcat(get(data_chain, :data_seroprev_cases)[:data
 my_model_simulated = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, false)
 
 if seed == 1
+    CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))
+
+    my_model_simulated_gq = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
+    MAP_chain_generated_quantities = get_gq_chains(my_model_simulated_gq, MAP_chain)
+    CSV.write(projectdir("data", "simulated_data", savename("true_generated_quantities", simulated_dict, "csv")), DataFrame(MAP_chain_generated_quantities))
+
     prior_samples = sample(my_model_simulated, Prior(), MCMCThreads(), n_samples, n_chains)
     wsave(resultsdir("simulated_posterior_samples", savename("simulated_prior_samples", simulated_dict, "jld2")), @dict prior_samples)
 end
