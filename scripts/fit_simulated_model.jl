@@ -28,6 +28,7 @@ simulated_dict = @dict seed max_t use_tests use_seroprev constant_R0 constant_al
 
 ## Control Parameters
 n_samples = 10_000
+n_chains = 4
 
 ## Define Prior Constants
 include(projectdir("src/prior_constants.jl"))
@@ -53,7 +54,9 @@ data_chain = predict(my_model_forecast_missing, MAP_chain)
 
 mkpath(projectdir("data", "simulated_data"))
 CSV.write(projectdir("data", "simulated_data", savename("simulated_data", simulated_dict, "csv")), DataFrame(data_chain))
-CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))
+if seed == 1
+    CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))    
+end
 
 simulated_data_new_deaths = vcat(get(data_chain, :data_new_deaths)[:data_new_deaths]...)
 simulated_data_new_cases = vcat(get(data_chain, :data_new_cases)[:data_new_cases]...)
@@ -69,9 +72,10 @@ alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centere
 simulated_MAP_init = optimize_many_MAP(my_model_simulated, 10, 1, true)[1]
 
 Random.seed!(seed)
-MAP_noise = randn(length(MAP_init))
+MAP_noise = [randn(length(MAP_init)) for x in 1:n_chains]
+
 Random.seed!(seed)
-posterior_samples = sample(my_model_simulated, alg, n_samples, discard_initial = 10_000, thin = 10, init_params = simulated_MAP_init * 0.95 + MAP_noise * 0.05)
+posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([simulated_MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
 
 mkpath(resultsdir("simulated_posterior_samples"))
 wsave(resultsdir("simulated_posterior_samples", savename("simulated_posterior_samples", simulated_dict, "jld2")), @dict posterior_samples)
