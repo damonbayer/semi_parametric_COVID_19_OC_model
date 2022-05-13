@@ -48,7 +48,8 @@ R0_plot <-
   scale_y_continuous(name = my_labeller["R₀_t"], limits = c(0.25, 3)) +
   ggtitle("Posterior Basic Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  my_theme
+  my_theme +
+  theme(legend.position = "right")
 
 Rt_plot <- 
   vector_gq %>% 
@@ -59,7 +60,8 @@ Rt_plot <-
   scale_y_continuous(name = my_labeller["Rₜ_tt"], limits = c(0.25, 3)) +
   ggtitle("Posterior Effective Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  my_theme
+  my_theme +
+  theme(legend.position = "right")
 
 save_plot_target_asp(filename = "figures/advancement_slides/R0_plot.pdf", plot = R0_plot, base_asp = 32/9, base_height = 4)
 save_plot_target_asp(filename = "figures/advancement_slides/Rt_plot.pdf", plot = Rt_plot, base_asp = 32/9, base_height = 4)
