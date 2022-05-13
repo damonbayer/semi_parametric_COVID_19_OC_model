@@ -57,7 +57,7 @@ weeks_ahead_dat_tmp <-
          half_alpha_0 == F,
          half_R0_0 == F,
          half_S_0 == F) %>% 
-  filter(weeks_ahead %in% c(1, 4)) %>% 
+  filter(weeks_ahead %in% c(0, 1, 4)) %>% 
   arrange(date) %>% 
   group_by(use_seroprev, use_tests) %>% 
   mutate(model_description = str_c("use_seroprev=", use_seroprev, "\n", "use_tests=", use_tests)) %>% 
@@ -66,9 +66,12 @@ weeks_ahead_dat_tmp <-
 dat_tidy_tmp <- 
   crossing(dat_tidy,
          weeks_ahead_dat_tmp %>% 
-           group_by(`Use Seroprev`,
-                     `Use Tests`,
-                    `Weeks Ahead`) %>% 
+           filter(`Weeks Ahead` != 0) %>% 
+           group_by(
+             # `Use Seroprev`,
+             `Use Tests`,
+             # `Weeks Ahead`
+             ) %>%
            summarize(min_date = min(date),
                      max_date = max(date))) %>% 
   filter(date >= min_date,
@@ -76,8 +79,9 @@ dat_tidy_tmp <-
   select(-ends_with("_date"))
 
 
-test_pos_forecast_plot <- 
+test_pos_forecast_comparison_plot <- 
   weeks_ahead_dat_tmp %>% 
+  filter(`Weeks Ahead` != 0) %>% 
   filter(name == "test_positivity") %>% 
   ggplot(aes(date, value)) +
   facet_grid(`Weeks Ahead` ~ `Use Seroprev`+`Use Tests`, scale = "free", labeller = label_both) +
@@ -88,17 +92,62 @@ test_pos_forecast_plot <-
   ggtitle("Test Positivity Forecasts") +
   my_theme
 
-deaths_forecast_plot <- 
+deaths_forecast_comparison_plot <- 
   weeks_ahead_dat_tmp %>% 
+  filter(`Weeks Ahead` != 0) %>% 
   filter(name == "deaths") %>% 
   ggplot(aes(date, value)) +
   facet_grid(`Weeks Ahead` ~ `Use Seroprev`+`Use Tests`, scale = "free", labeller = label_both) +
   geom_lineribbon(mapping = aes(ymin = .lower, ymax = .upper), step = "mid", color = brewer_line_color) +
   geom_point(data = dat_tidy_tmp %>% filter(name == "deaths")) +
-  scale_y_continuous("Test Positivity", labels = comma) +
+  scale_y_continuous("Deaths", labels = comma) +
   scale_x_date("Date") +
   ggtitle("Deaths Forecasts") +
   my_theme
 
-save_plot_target_asp(filename = "figures/advancement_slides/test_pos_forecast_plot.pdf", plot = test_pos_forecast_plot, ncol = 4, nrow = 2, base_asp = 16/9)
-save_plot_target_asp(filename = "figures/advancement_slides/deaths_forecast_plot.pdf", plot = deaths_forecast_plot, ncol = 4, nrow = 2, base_asp = 16/9)
+dat_tidy_single_tmp <- 
+  crossing(dat_tidy,
+           weeks_ahead_dat_tmp %>% 
+             filter(`Use Seroprev` == T,
+                    `Use Tests` == T) %>% 
+             summarize(min_date = min(date),
+                       max_date = max(date))) %>% 
+  filter(date >= min_date,
+         date <= max_date) %>% 
+  select(-ends_with("_date"))
+
+deaths_forecast_single_plot <- 
+  weeks_ahead_dat_tmp %>% 
+  filter(name == "deaths",
+         `Use Seroprev` == T,
+         `Use Tests` == T) %>% 
+  ggplot(aes(date, value)) +
+  facet_wrap(. ~ `Weeks Ahead`, labeller = label_both, ncol = 1) +
+  geom_lineribbon(mapping = aes(ymin = .lower, ymax = .upper), step = "mid", color = brewer_line_color) +
+  geom_point(data = dat_tidy_single_tmp %>% filter(name == "deaths")) +
+  scale_y_continuous("Deaths", labels = comma) +
+  scale_x_date("Date") +
+  ggtitle("Deaths Forecasts") +
+  my_theme
+
+test_pos_forecast_single_plot <- 
+  weeks_ahead_dat_tmp %>% 
+  filter(name == "test_positivity",
+         `Use Seroprev` == T,
+         `Use Tests` == T) %>% 
+  ggplot(aes(date, value)) +
+  facet_wrap(. ~ `Weeks Ahead`, labeller = label_both, ncol = 1) +
+  geom_lineribbon(mapping = aes(ymin = .lower, ymax = .upper), step = "mid", color = brewer_line_color) +
+  geom_point(data = dat_tidy_single_tmp %>% filter(name == "test_positivity")) +
+  scale_y_continuous("Test Positivity", labels = percent) +
+  scale_x_date("Date") +
+  ggtitle("Test Positivity Forecast") +
+  my_theme
+
+save_plot_target_asp(filename = "figures/advancement_slides/test_pos_forecast_comparison_plot.pdf", plot = test_pos_forecast_comparison_plot, ncol = 4, nrow = 2, base_asp = 16/9)
+
+save_plot_target_asp(filename = "figures/advancement_slides/deaths_forecast_comparison_plot.pdf", plot = deaths_forecast_comparison_plot, ncol = 4, nrow = 2, base_asp = 16/9)
+
+save_plot_target_asp(filename = "figures/advancement_slides/test_pos_forecast_single_plot.pdf", plot = test_pos_forecast_single_plot, ncol = 1, nrow = 3, base_asp = 16/9, base_height = 2)
+
+save_plot_target_asp(filename = "figures/advancement_slides/deaths_forecast_single_plot.pdf", plot = deaths_forecast_single_plot, ncol = 1, nrow = 3, base_asp = 16/9, base_height = 2)
