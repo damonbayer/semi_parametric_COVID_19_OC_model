@@ -99,3 +99,7 @@ compare_constant_time_varying_plot <-
   scale_x_date(name = "Date") +
   scale_fill_discrete(name = "Model", labels = ~str_replace_all(., "_", " ") %>% str_to_title())
 
+save_plot_target_asp(filename = path("figures/advancement_slides", "compare_constant_time_varying_plot", ext = "pdf"),
+                           plot = compare_constant_time_varying_plot, ncol = 3, nrow = 1,
+                           base_asp = 16/9,
+                           base_height = 6)
