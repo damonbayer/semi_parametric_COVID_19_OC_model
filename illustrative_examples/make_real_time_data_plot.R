@@ -5,9 +5,10 @@ library(data.table)
 library(dtplyr)
 library(scales)
 library(cowplot)
+source("src/plot_functions.R")
 
-negative_line_list_path_new <- "/Users/damon/Documents/uci_covid_modeling2/data/from_OCHCA/All PCR tests updated 05.10.22.csv"
-negative_line_list_path_old <- "/Users/damon/Downloads/All PCR tests updated 1.6.22.csv"
+negative_line_list_path_new <- "~/Documents/uci_covid_modeling2/data/from_OCHCA/All PCR tests updated 05.10.22.csv"
+negative_line_list_path_old <- "~/Downloads/All PCR tests updated 1.6.22.csv"
 
 process_neg_line_list <- function(negative_line_list_path) {
   neg_line_list <-
@@ -91,9 +92,9 @@ tmp <-
   mutate(test_positivity = cases / tests) %>%
   select(date = end_date, cases, tests, test_positivity, reported_on, binning = lump) %>%
   pivot_longer(c(cases, tests, test_positivity)) %>%
-  mutate(reported_on = format(reported_on, "%b %d, %y"))
+  mutate(reported_on = format(reported_on, "%b %d, %Y"))
 
-tmp_plot <-
+real_time_data_plot <-
   tmp %>%
   mutate(binning = str_c(binning, " days"),
          data = name %>%
@@ -102,9 +103,9 @@ tmp_plot <-
                          str_to_title())) %>%
   rename_with(str_to_title, c(binning, data)) %>%
   ggplot(aes(date, value, color = reported_on)) +
-  facet_grid(Data ~ Binning, scales = "free_y", labeller = label_both) +
-  geom_line() +
-  geom_point() +
+  facet_grid(Data ~ Binning, scales = "free_y", labeller = labeller(.cols = label_both)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 2.5) +
   cowplot::theme_minimal_grid() +
   theme(legend.position = "bottom") +
   scale_x_date(name = "Date", date_labels = "%b %d '%y") +
@@ -112,17 +113,9 @@ tmp_plot <-
   scale_color_discrete("Date Reported")
 
 
-
-save_plot_target_asp <- function (filename, plot, ncol = 1, nrow = 1, base_height = 3.71,
-                                  base_asp = 1.618, base_width = NULL) {
-  cowplot::save_plot(filename, plot, ncol = ncol, nrow = nrow, base_height = base_height,
-                      base_asp = base_asp * nrow / ncol, base_width = base_width)
-}
-
-
-save_plot_target_asp(filename = "figures/advancement_slides/real_time_data.pdf",
-                     plot = tmp_plot,
+save_plot_target_asp(filename = "figures/advancement_slides/real_time_data_plot.pdf",
+                     plot = real_time_data_plot,
                      ncol = 2,
                      nrow = 3,
-                     base_asp = 16/9,
+                     base_asp = 3/2,
                      base_height = 2)
