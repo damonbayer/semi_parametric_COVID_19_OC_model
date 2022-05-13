@@ -33,14 +33,14 @@ if seed == 1
     prior_samples_path = resultsdir("simulated_posterior_samples", savename("simulated_prior_samples", simulated_dict, "jld2"))
     prior_samples = load(prior_samples_path)["prior_samples"]
     prior_samples_summary = innerjoin(DataFrame.(describe(prior_samples, q = [0.1, 0.9]))..., on = :parameters)
-    CSV.write(replace(prior_samples_path, "simulated_prior_samples"=>"simulated_prior_samples_summary") |> x -> replace(x, "jld2"=>"csv"), prior_samples_summary)
+    CSV.write(resultsdir("simulated_posterior_samples_summary", savename("simulated_prior_samples_summary", simulated_dict, "csv")), prior_samples_summary)
 end
 
 posterior_samples_path = resultsdir("simulated_posterior_samples", savename("simulated_posterior_samples", simulated_dict, "jld2"))
 posterior_samples = load(posterior_samples_path)["posterior_samples"]
 
 posterior_samples_summary = innerjoin(DataFrame.(describe(posterior_samples, q = [0.1, 0.9]))..., on = :parameters)
-CSV.write(replace(posterior_samples_path, "simulated_posterior_samples"=>"simulated_posterior_samples_summary") |> x -> replace(x, "jld2"=>"csv"), posterior_samples_summary)
+CSV.write(resultsdir("simulated_posterior_samples_summary", savename("simulated_posterior_samples_summary", simulated_dict, "csv")), posterior_samples_summary)
 
 data = CSV.read(projectdir("data", "simulated_data", savename("simulated_data", simulated_dict, "csv")), DataFrame)
 
@@ -57,11 +57,11 @@ my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cas
 if seed == 1
     Random.seed!(1)
     generated_quantities_prior = get_gq_chains(my_model, prior_samples)
-    CSV.write(replace(prior_samples_path, "simulated_prior_samples"=>"simulated_prior_generated_quantities_summary") |> x -> replace(x, "jld2"=>"csv"), generated_quantities_prior)
+    generated_quantities_prior_summary = innerjoin(DataFrame.(describe(generated_quantities_prior, q = [0.1, 0.9]))..., on = :parameters)
+    CSV.write(resultsdir("simulated_generated_quantities_summary", savename("simulated_prior_generated_quantities_summary", simulated_dict, "csv")), generated_quantities_prior_summary)
 end
 
 Random.seed!(1)
 generated_quantities = get_gq_chains(my_model, posterior_samples)
-
 generated_quantities_summary = innerjoin(DataFrame.(describe(generated_quantities, q = [0.1, 0.9]))..., on = :parameters)
-CSV.write(replace(posterior_samples_path, "simulated_posterior_samples"=>"simulated_generated_quantities_summary") |> x -> replace(x, "jld2"=>"csv"), generated_quantities_summary)
+CSV.write(resultsdir("simulated_generated_quantities_summary", savename("simulated_generated_quantities_summary", simulated_dict, "csv")), generated_quantities_summary)
