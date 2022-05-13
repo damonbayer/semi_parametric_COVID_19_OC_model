@@ -1,6 +1,7 @@
 library(tidyverse)
 library(tidybayes)
 library(scales)
+source("src/plot_functions.R")
 
 latent_curves <- 
   read_csv("illustrative_examples/age_structure/data/data.csv") %>% 
@@ -18,6 +19,17 @@ latent_curves <-
                       Combined = "total")) %>% 
   mutate(type = "latent")
 
+latent_curves %>% 
+  filter(name == "I",
+         age_group != "Combined") %>% 
+  pivot_wider(names_from = age_group, values_from = value) %>% 
+  group_by(t) %>% 
+  summarize(true_ifr = (Young * 0.01 + Old * 0.1) / (Young + Old)) %>% 
+  ggplot(aes(t, true_ifr)) +
+  geom_line()
+
+unique(latent_curves$name)
+
 dat <- 
   read_csv("illustrative_examples/age_structure/data/data.csv") %>% 
   select(t, starts_with("data")) %>% 
@@ -32,17 +44,20 @@ latent_curves %>%
   geom_line() +
   cowplot::theme_cowplot()
   
-           
-ggplot(mapping = aes(t, value)) +
+data_ifr_age_structure_plot <-     
+  ggplot(mapping = aes(t, value)) +
   facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title())) +
   geom_line(mapping = aes(color = age_group),
             data = latent_curves %>% 
               filter(str_detect(name, "latent")) %>% 
               mutate(name = str_remove(name, "latent_"))) +
   geom_point(data = dat) +
+  scale_y_continuous(name = "Count", labels = comma) +
+  scale_x_continuous(name = "Time") +
   labs(color = "Age Group") +
-  cowplot::theme_cowplot() +
-  ggtitle("Latent and Observed Cases and Deaths")
+  theme_minimal_grid() +
+  ggtitle("Latent and Observed Cases and Deaths") +
+  theme(legend.position = "bottom")
 
 posterior_predictive <- 
   read_csv("illustrative_examples/age_structure/data/posterior_predictive.csv") %>% 
@@ -72,19 +87,29 @@ generated_quantities <-
   median_qi(.width = c(0.5, 0.8, 0.95))
 
 
-
-generated_quantities %>% 
+posterior_ifr_age_structure_plot <- 
+  generated_quantities %>% 
   filter(name == "IFR_t") %>% 
   ggplot(aes(index, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon() +
-  scale_fill_brewer(name = "Credible Interval Width",
-                    labels = ~percent(as.numeric(.))) +
   scale_x_continuous("Time") +
   scale_y_continuous("IFR", labels = percent, breaks = c(0, 0.01, 0.05, 0.1, 0.15)) +
   annotate("text", x = 2, y = 0.1, label = "True IFR for Old Population", vjust = -0.5, hjust = 0) +
   annotate("text", x = 0, y = 0.01, label = "True IFR for Young Population", vjust = -0.5, hjust = 0) +
   geom_hline(yintercept = c(0.01, 0.1), linetype = "dashed") +
-  cowplot::theme_cowplot() +
-  theme(legend.position = "bottom") +
   ggtitle("Posterior Infection Fatality Ratio for Heterogeneous Population",
-          "Modelled as Homogeneous Population")
+          "Modelled as Homogeneous Population") +
+  my_theme
+
+save_plot_target_asp(filename = "figures/advancement_slides/data_ifr_age_structure_plot.pdf",
+                     plot = data_ifr_age_structure_plot,
+                     ncol = 2,
+                     nrow = 1,
+                     base_asp = 16/9)
+
+save_plot_target_asp(filename = "figures/advancement_slides/posterior_ifr_age_structure_plot.pdf",
+                     plot = posterior_ifr_age_structure_plot,
+                     ncol = 1,
+                     nrow = 1,
+                     base_height = 5,
+                     base_asp = 16/9)
