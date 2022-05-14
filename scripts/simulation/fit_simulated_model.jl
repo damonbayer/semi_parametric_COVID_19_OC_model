@@ -46,36 +46,13 @@ include(projectdir("src/bayes_seird.jl"))
 ## Create Models
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
 my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
+data_chain = load(datadir("simulated_data", savename("simulated_data", simulated_dict, "jld2")))["data_chain"][seed]
 
-MAP_init = optimize_many_MAP(my_model, 10, 1, true)[1]
-MAP_chain = Chains([MAP_init], flattened_varnames_list(my_model))
-
-Random.seed!(seed)
-data_chain = predict(my_model_forecast_missing, MAP_chain)
-
-
-mkpath(projectdir("data", "simulated_data"))
-CSV.write(projectdir("data", "simulated_data", savename("simulated_data", simulated_dict, "csv")), DataFrame(data_chain))
-if seed == 1
-    CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))    
-end
-
-simulated_data_new_deaths = vcat(get(data_chain, :data_new_deaths)[:data_new_deaths]...)
-simulated_data_new_cases = vcat(get(data_chain, :data_new_cases)[:data_new_cases]...)
-simulated_data_seroprev_cases = vcat(get(data_chain, :data_seroprev_cases)[:data_seroprev_cases]...)
+simulated_data_new_deaths = round.(Int, vcat(get(data_chain, :data_new_deaths)[:data_new_deaths]...))
+simulated_data_new_cases = round.(Int, vcat(get(data_chain, :data_new_cases)[:data_new_cases]...))
+simulated_data_seroprev_cases = round.(Int, vcat(get(data_chain, :data_seroprev_cases)[:data_seroprev_cases]...))
 
 my_model_simulated = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, false)
-
-if seed == 1
-    CSV.write(projectdir("data", "simulated_data", savename("true_parameters", simulated_dict, "csv")), DataFrame(MAP_chain))
-
-    my_model_simulated_gq = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
-    MAP_chain_generated_quantities = get_gq_chains(my_model_simulated_gq, MAP_chain)
-    CSV.write(projectdir("data", "simulated_data", savename("true_generated_quantities", simulated_dict, "csv")), DataFrame(MAP_chain_generated_quantities))
-
-    prior_samples = sample(my_model_simulated, Prior(), MCMCThreads(), n_samples, n_chains)
-    wsave(resultsdir("simulated_posterior_samples", savename("simulated_prior_samples", simulated_dict, "jld2")), @dict prior_samples)
-end
 
 alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
     ESS(:R0_params_non_centered),
