@@ -123,3 +123,24 @@ c("pp_death_sensitivity_plot", "pp_deaths_plot", "pp_test_pos_plot",
                              plot = get(.),
                              base_asp = 32/9,
                              base_height = 4))
+
+
+tmp_xlim <- c(lubridate::ymd("2020-06-07"), lubridate::ymd("2020-08-23"))
+tmp_ylim <- c(1402, 8287)
+tmp_asp <- as.numeric((tmp_xlim[2] - tmp_xlim[1]) / (tmp_ylim[2] - tmp_ylim[1]))
+
+
+pp_abstract_plot <- 
+  all_pp %>% 
+  filter(name == "cases") %>% 
+  filter(model_design == 69) %>%
+  ggplot(aes(date, value)) +
+  geom_lineribbon(mapping = aes(ymin = .lower, ymax = .upper),
+                  color = brewer_line_color) +
+  geom_point(data = dat_tidy %>%
+               filter(name == "cases")) +
+  my_theme +
+  theme_nothing() +
+  coord_fixed(ratio = tmp_asp, xlim = tmp_xlim, ylim = tmp_ylim)
+
+save_plot(filename = "~/Desktop/pp_abstract.pdf", plot = pp_abstract.pdf, base_asp = 1)
