@@ -32,7 +32,8 @@ simulated_dict_seed_1 = @dict seed max_t use_tests use_seroprev constant_R0 cons
 seed = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 
 ## Control Parameters
-n_samples = 10_000
+# n_samples = 10_000
+n_samples = 10_0
 n_chains = 4
 
 ## Define Prior Constants
@@ -69,7 +70,8 @@ Random.seed!(seed)
 MAP_noise = [randn(length(MAP_init)) for x in 1:n_chains]
 
 Random.seed!(seed)
-posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
+# posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
+posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 1, thin = 1, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
 posterior_samples_summary = innerjoin(DataFrame.(describe(posterior_samples, q = [0.1, 0.9]))..., on = :parameters)
 CSV.write(resultsdir("simulated_posterior_samples_summary", savename("simulated_posterior_samples_summary", simulated_dict, "csv")), posterior_samples_summary)
 
