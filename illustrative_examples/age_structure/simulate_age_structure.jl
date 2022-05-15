@@ -10,7 +10,7 @@ using DataFrames
 using semi_parametric_COVID_19_OC_model
 
 max_t = 20.0
-
+obstimes = collect(1:max_t)
 function seirdc_age_log_ode(du, u, p, t)
     (S_o, E_o, I_o, R_o, D_o, C_o, S_y, E_y, I_y, R_y, D_y, C_y) = exp.(u)
     (β_oo, γ, ν, IFR_o, β_yy, IFR_y, β_yo, β_oy) = p
