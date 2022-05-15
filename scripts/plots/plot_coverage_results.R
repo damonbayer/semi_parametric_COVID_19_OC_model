@@ -19,8 +19,7 @@ gq_simulation_time_varying_shrinkage_plot <-
   scale_color_discrete(name = "Parameter", labels = my_labeller) +
   scale_y_continuous(name = "Shrinkage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Shrinkage Properties of Time-Varying Parameters",
-          subtitle = "from 200 simulations") +
+  ggtitle("Posterior Shrinkage Properties of Time-Varying Parameters from 200 simulations") +
   my_theme
 
 gq_simulation_time_varying_coverage_plot <- 
@@ -35,9 +34,9 @@ gq_simulation_time_varying_coverage_plot <-
   geom_hline(yintercept = 0.8, linetype = "dashed") +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Coverage Properties of Time-Varying Parameters",
-          subtitle = "from 200 simulations") +
-  my_theme
+  ggtitle("Posterior Coverage Properties of Time-Varying Parameters from 200 simulations") +
+  my_theme +
+  theme(legend.position ="none")
 
 # Shrinkage ---------------------------------------------------------------
 gq_simulation_compartment_shrinkage_plot <- 
@@ -49,12 +48,11 @@ gq_simulation_compartment_shrinkage_plot <-
   ggplot(aes(time, shrinkage, color = name)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0,  linetype = "dashed")
+  geom_hline(yintercept = 0,  linetype = "dashed") +
   scale_color_discrete(name = "Compartment", labels = my_labeller) +
   scale_y_continuous(name = "Shrinkage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Shrinkage Properties of Compatment Sizes",
-          subtitle = "from 200 simulations") +
+  ggtitle("Posterior Shrinkage Properties of Compatment Sizes from 200 simulations") +
   my_theme
 
 gq_simulation_compartment_coverage_plot <- 
@@ -70,9 +68,9 @@ gq_simulation_compartment_coverage_plot <-
   scale_color_discrete(name = "Compartment", labels = my_labeller) +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Coverage Properties of Compartment Sizes",
-          subtitle = "from 200 simulations") +
-  my_theme
+  ggtitle("Posterior Coverage Properties of Compartment Sizes from 200 simulations") +
+  my_theme +
+  theme(legend.position = "none")
 
 # Scalar ------------------------------------------------------------------
 
@@ -110,13 +108,24 @@ gq_simulation_scalar_coverage_plot <-
 
 
 # Save Plots --------------------------------------------------------------
-c("gq_simulation_compartment_coverage_plot", "gq_simulation_compartment_shrinkage_plot", 
-  "gq_simulation_time_varying_coverage_plot", "gq_simulation_time_varying_shrinkage_plot"
-) %>% 
+gq_simulation_compartment_properties_plot <- 
+  plot_grid(gq_simulation_compartment_coverage_plot, gq_simulation_compartment_shrinkage_plot,
+            align = "hv",
+            nrow = 2,
+            axis = "l")
+
+gq_simulation_time_verying_properties_plot <- 
+  plot_grid(gq_simulation_time_varying_coverage_plot, gq_simulation_time_varying_shrinkage_plot,
+            align = "hv",
+            nrow = 2,
+            axis = "l")
+
+
+c("gq_simulation_compartment_properties_plot", "gq_simulation_time_verying_properties_plot") %>% 
   walk(~save_plot_target_asp(filename = path("figures/advancement_slides", ., ext = "pdf"),
                              plot = get(.),
-                             base_height = 3,
-                             base_asp = 24/9))
+                             base_height = 6,
+                             base_asp = 16/9))
 
 
 c("gq_simulation_scalar_coverage_plot", "gq_simulation_scalar_shrinkage_plot") %>% 

@@ -95,11 +95,16 @@ compare_constant_time_varying_plot <-
   facet_wrap(. ~ name, scales = "free_y", labeller = my_labeller_fn) +
   geom_lineribbon(alpha = 0.5) +
   theme(legend.position = "bottom") +
-  scale_y_continuous(name = NULL) +
+  scale_y_continuous(name = "Value") +
   scale_x_date(name = "Date") +
-  scale_fill_discrete(name = "Model", labels = ~str_replace_all(., "_", " ") %>% str_to_title())
+  scale_fill_discrete(name = "Model",
+                      labels = TeX(c(all_time_varying = "All Time Varying",
+                                     constant_R0 = "Constant $R_0$",
+                                     constant_alpha = "Constant $\\alpha",
+                                     constant_IFR  = "Constant $\\eta$"))) +
+  theme(legend.position = c(0.025, 3/4))
 
 save_plot_target_asp(filename = path("figures/advancement_slides", "compare_constant_time_varying_plot", ext = "pdf"),
                            plot = compare_constant_time_varying_plot, ncol = 3, nrow = 1,
-                           base_asp = 16/9,
-                           base_height = 6)
+                           base_asp = 1730/650,
+                     base_height = 5)

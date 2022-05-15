@@ -51,36 +51,46 @@ deaths_plot <-
   ggplot(mapping = aes(date, value)) +
   geom_lineribbon(data = vector_gq %>% 
                     filter(name == "D"),
-                  mapping = aes(ymin = .lower, ymax = .upper)) +
+                  mapping = aes(ymin = .lower, ymax = .upper),
+                  color = brewer_line_color, key_glyph = "rect") +
   geom_point(data = dat_tidy %>% 
                filter(name == "cumulative_deaths")) +
   scale_y_continuous(name = "Deaths", labels = comma) +
   scale_x_date(name = "Date", date_breaks = date_breaks, date_labels = date_labels) +
   ggtitle("Posterior Latent and Observed Deaths") +
-  my_theme
+  my_theme +
+  theme(legend.position = c(0.1, 0.8))
 
 cases_plot <- 
   ggplot(mapping = aes(date, value)) +
   geom_lineribbon(data = vector_gq %>% 
                     filter(name == "C"),
-                  mapping = aes(ymin = .lower, ymax = .upper)) +
+                  mapping = aes(ymin = .lower, ymax = .upper),
+                  color = brewer_line_color, key_glyph = "rect") +
   geom_point(data = dat_tidy %>% 
                filter(name == "cumulative_cases")) +
   scale_y_continuous(name = "Cases", labels = comma) +
   scale_x_date(name = "Date", date_breaks = date_breaks, date_labels = date_labels) +
   ggtitle("Posterior Latent and Observed Cases") +
-  my_theme
+  my_theme +
+  guides(fill = "none")
 
 prevalence_plot <- 
   ggplot(mapping = aes(date, value)) +
   geom_lineribbon(data = vector_gq %>% 
                     filter(name == "prevalence"),
-                  mapping = aes(ymin = .lower, ymax = .upper)) +
+                  mapping = aes(ymin = .lower, ymax = .upper),
+                  color = brewer_line_color, key_glyph = "rect") +
   scale_y_continuous(name = "Prevalence", labels = comma) +
   scale_x_date(name = "Date", date_breaks = date_breaks, date_labels = date_labels) +
   ggtitle("Posterior Latent Prevalence") +
-  my_theme
+  my_theme +
+  guides(fill = "none")
 
-save_plot_target_asp(filename = "figures/advancement_slides/deaths_plot.pdf", plot = deaths_plot, base_asp = 16/3/9, base_height = 9)
-save_plot_target_asp(filename = "figures/advancement_slides/cases_plot.pdf", plot = cases_plot, base_asp = 16/3/9, base_height = 9)
-save_plot_target_asp(filename = "figures/advancement_slides/prevalence_plot.pdf", plot = prevalence_plot, base_asp = 16/3/9, base_height = 9)
+
+shape_of_the_pandemic_plot <- plot_grid(deaths_plot, cases_plot, prevalence_plot, nrow = 1, align = "hv")
+
+save_plot_target_asp(filename = "figures/advancement_slides/shape_of_the_pandemic_plot.pdf",
+                     plot = shape_of_the_pandemic_plot,
+                     base_asp = 1730/650,
+                     base_height = 5)

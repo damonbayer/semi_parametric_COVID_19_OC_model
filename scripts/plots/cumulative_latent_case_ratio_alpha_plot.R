@@ -45,11 +45,23 @@ vector_gq_path <-
          use_tests == T) %>% 
   pull(full_path)
 
-
+\
 vector_gq <- 
   read_csv(vector_gq_path) %>% 
   filter(date <= max_date) %>% 
   filter(name %in% c("α_t", "C"))
+
+alpha_plot <- 
+  vector_gq %>% 
+  filter(name == "α_t") %>% 
+  ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
+  geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
+  scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
+  scale_y_continuous(name = my_labeller["α_t"], limits = c(0, NA)) +
+  ggtitle(TeX("Posterior $\\alpha$", bold = T)) +
+  my_theme +
+  theme(legend.position = c(0.01, 0.15), legend.direction="horizontal")
+
 
 cumulative_latent_case_ratio_plot <- 
   vector_gq %>% 
@@ -58,24 +70,13 @@ cumulative_latent_case_ratio_plot <-
   drop_na() %>% 
   mutate(across(c(value, .lower, .upper), ~`/`(., cumulative_cases))) %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
-  geom_lineribbon(color = brewer_line_color, step = "hv") +
+  geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
   scale_y_continuous(name = "Cumulative Latent:Case Ratio", limits = c(1, NA), breaks = seq(5, 30, 5)) +
   ggtitle("Posterior Cumulative Latent:Case Ratio") +
   my_theme +
-  theme(legend.position = "right")
-
-alpha_plot <- 
-  vector_gq %>% 
-  filter(name == "α_t") %>% 
-  ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
-  geom_lineribbon(color = brewer_line_color, step = "hv") +
-  scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
-  scale_y_continuous(name = my_labeller["α_t"], limits = c(0, NA)) +
-  ggtitle(TeX("Posterior $\\alpha$", bold = T)) +
-  my_theme +
-  theme(legend.position = "right")
+  theme(legend.position = "none")
 
 
-save_plot_target_asp(filename = "figures/advancement_slides/cumulative_latent_case_ratio_plot.pdf", plot = cumulative_latent_case_ratio_plot, base_asp = 32/9, base_height = 4)
-save_plot_target_asp(filename = "figures/advancement_slides/alpha_plot.pdf", plot = alpha_plot, base_asp = 32/9, base_height = 4)
+alpha_cumulative_latent_case_ratio_plot <- plot_grid(alpha_plot, cumulative_latent_case_ratio_plot, ncol = 1, align = "hv")
+save_plot_target_asp(filename = "figures/advancement_slides/alpha_cumulative_latent_case_ratio_plot.pdf", plot = alpha_cumulative_latent_case_ratio_plot, base_asp = 16/9, base_height = 6)

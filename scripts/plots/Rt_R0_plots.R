@@ -43,25 +43,26 @@ R0_plot <-
   vector_gq %>% 
   filter(name == "R₀_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
-  geom_lineribbon(color = brewer_line_color, step = "hv") +
+  geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
   scale_y_continuous(name = my_labeller["R₀_t"], limits = c(0.25, 3)) +
   ggtitle("Posterior Basic Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   my_theme +
-  theme(legend.position = "right")
+  theme(legend.position = c(0.1, 0.8), legend.direction="horizontal")
 
 Rt_plot <- 
   vector_gq %>% 
   filter(name == "Rₜ_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
-  geom_lineribbon(color = brewer_line_color, step = "hv") +
+  geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
   scale_y_continuous(name = my_labeller["Rₜ_tt"], limits = c(0.25, 3)) +
   ggtitle("Posterior Effective Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   my_theme +
-  theme(legend.position = "right")
+  guides(fill = "none")
 
-save_plot_target_asp(filename = "figures/advancement_slides/R0_plot.pdf", plot = R0_plot, base_asp = 32/9, base_height = 4)
-save_plot_target_asp(filename = "figures/advancement_slides/Rt_plot.pdf", plot = Rt_plot, base_asp = 32/9, base_height = 4)
+
+Rt_R0_plot <- plot_grid(R0_plot, Rt_plot, ncol = 1, align = "hv")
+save_plot_target_asp(filename = "figures/advancement_slides/Rt_R0_plot.pdf", plot = Rt_R0_plot, base_asp = 16/9, base_height = 6)
