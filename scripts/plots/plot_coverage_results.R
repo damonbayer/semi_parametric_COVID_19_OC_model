@@ -15,7 +15,7 @@ gq_simulation_time_varying_shrinkage_plot <-
   ggplot(aes(time, shrinkage, color = name)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 0,  linetype = "dashed") +
   scale_color_discrete(name = "Parameter", labels = my_labeller) +
   scale_y_continuous(name = "Shrinkage", label = percent) +
   scale_x_continuous("Time") +
@@ -32,7 +32,7 @@ gq_simulation_time_varying_coverage_plot <-
   scale_color_discrete(name = "Parameter", labels = my_labeller) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0.8) +
+  geom_hline(yintercept = 0.8, linetype = "dashed") +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
   ggtitle("Posterior Coverage Properties of Time-Varying Parameters",
@@ -49,7 +49,7 @@ gq_simulation_compartment_shrinkage_plot <-
   ggplot(aes(time, shrinkage, color = name)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 0,  linetype = "dashed")
   scale_color_discrete(name = "Compartment", labels = my_labeller) +
   scale_y_continuous(name = "Shrinkage", label = percent) +
   scale_x_continuous("Time") +
@@ -66,7 +66,7 @@ gq_simulation_compartment_coverage_plot <-
   ggplot(aes(time, covered, color = name)) +
   geom_line() +
   geom_point() +
-  geom_hline(yintercept = 0.8) +
+  geom_hline(yintercept = 0.8, linetype = "dashed") +
   scale_color_discrete(name = "Compartment", labels = my_labeller) +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
@@ -85,11 +85,11 @@ gq_simulation_scalar_shrinkage_plot <-
   mutate(name = fct_reorder(name, shrinkage)) %>% 
   ggplot(aes(shrinkage, name)) +
   geom_point() +
-  geom_vline(xintercept = 0) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Shrinkage", labels = percent)  +
-  ggtitle("Posterior Shrinkage Properties of Time-Stationary Parameters",
-          subtitle = "from 200 simulations") +
+  ggtitle("Posterior Shrinkage Properties",
+          subtitle = "Time-stationary parameters, 200 simulations") +
   my_theme
 
 gq_simulation_scalar_coverage_plot <- 
@@ -101,11 +101,11 @@ gq_simulation_scalar_coverage_plot <-
   mutate(name = fct_reorder(name, covered)) %>% 
   ggplot(aes(covered, name)) +
   geom_point() +
-  geom_vline(xintercept = 0.8) +
+  geom_vline(xintercept = 0.8, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Coverage", labels = percent) +
-  ggtitle("Posterior Coverage Properties of Time-Stationary Parameters",
-          subtitle = "from 200 simulations") +
+  ggtitle("Posterior Coverage Properties",
+          subtitle = "Time-stationary parameters, 200 simulations") +
   my_theme
 
 
@@ -122,6 +122,6 @@ c("gq_simulation_compartment_coverage_plot", "gq_simulation_compartment_shrinkag
 c("gq_simulation_scalar_coverage_plot", "gq_simulation_scalar_shrinkage_plot") %>% 
   walk(~save_plot_target_asp(filename = path("figures/advancement_slides", ., ext = "pdf"),
                              plot = get(.),
-                             base_height = 8.5,
+                             base_height = 5,
                              base_asp = 8/9))
 

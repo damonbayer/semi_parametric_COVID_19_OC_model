@@ -125,9 +125,9 @@ single_gq_simulation_scalar_plot <-
   scale_y_discrete(name = "Distribution") +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
-  ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters for One Simulated Dataset",
-          subtitle = "True values in black") +
-  theme(legend.position = "bottom")
+  ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters",
+          subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
+  theme(legend.position = "none")
 
 
 single_gq_simulation_compartment_plot <- 
@@ -137,7 +137,8 @@ single_gq_simulation_compartment_plot <-
                        filter(name %in% c("S", "E", "I", "R", "D")) %>% 
                        mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
                      mapping = aes(x= time, y = mean, ymin = .lower, ymax = .upper, fill = dist, color = dist),
-                  alpha = 0.5) +
+                  alpha = 0.5,
+                  key_glyph = "rect") +
   geom_point(data = true_gq %>%
                filter(!is.na(time)) %>% 
                filter(name %in% c("S", "E", "I", "R", "D")) %>% 
@@ -154,9 +155,9 @@ single_gq_simulation_compartment_plot <-
   scale_x_continuous(name = "Time") +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
-  ggtitle("Prior and Posterior Credible Intervals for Compartments for One Simulated Dataset",
-          subtitle = "True values in black") +
-  theme(legend.position = "bottom")
+  ggtitle("Prior and Posterior Credible Intervals for Compartments",
+          subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
+  theme(legend.position = c(5/6, 1/4))
 
 single_gq_simulation_time_varying_plot <- 
   ggplot() +
@@ -164,7 +165,8 @@ single_gq_simulation_time_varying_plot <-
                     filter(!is.na(time)) %>% 
                     filter(str_ends(name, "_t")),
                   mapping = aes(x= time, y = mean, ymin = .lower, ymax = .upper, fill = dist, color = dist),
-                  alpha = 0.5) +
+                  alpha = 0.5,
+                  key_glyph = "rect") +
   geom_point(data = true_gq %>%
                filter(!is.na(time)) %>% 
                filter(str_ends(name, "_t")),
@@ -179,9 +181,9 @@ single_gq_simulation_time_varying_plot <-
   scale_x_continuous(name = "Time") +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
-  ggtitle("Prior and Posterior Credible Intervals for Time-Varying Parameters for One Simulated Dataset",
-          subtitle = "True values in black") +
-  theme(legend.position = "bottom")
+  ggtitle("Prior and Posterior Credible Intervals for Time-Varying Parameters",
+          subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
+  theme(legend.position = c(5/6, 1/4))
 
 
 save_plot_target_asp(filename = "figures/advancement_slides/simulated_binned_data_plot.pdf",
@@ -191,10 +193,22 @@ save_plot_target_asp(filename = "figures/advancement_slides/simulated_binned_dat
                      base_asp = 1)
 
 save_plot_target_asp(filename = "figures/advancement_slides/single_gq_simulation_compartment_plot.pdf",
-                     plot = single_gq_simulation_compartment_plot, ncol = 3, nrow = 2, base_asp = 16/9)
+                     plot = single_gq_simulation_compartment_plot,
+                     ncol = 3,
+                     nrow = 2,
+                     base_asp = 16/9,
+                     base_height = 3)
 
 save_plot_target_asp(filename = "figures/advancement_slides/single_gq_simulation_scalar_plot.pdf",
-                     plot = single_gq_simulation_scalar_plot, ncol = 3, nrow = 2, base_asp = 16/9)
+                     plot = single_gq_simulation_scalar_plot,
+                     ncol = 3,
+                     nrow = 2,
+                     base_asp = 16/9,
+                     base_height = 3)
 
 save_plot_target_asp(filename = "figures/advancement_slides/single_gq_simulation_time_varying_plot.pdf",
-                     plot = single_gq_simulation_time_varying_plot, ncol = 3, nrow = 2, base_asp = 16/9)
+                     plot = single_gq_simulation_time_varying_plot,
+                     ncol = 3,
+                     nrow = 2,
+                     base_asp = 16/9,
+                     base_height = 3)
