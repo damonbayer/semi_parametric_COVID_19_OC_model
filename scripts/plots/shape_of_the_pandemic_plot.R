@@ -53,6 +53,8 @@ deaths_plot <-
                     filter(name == "D"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   color = brewer_line_color, key_glyph = "rect") +
+  geom_line(data = dat_tidy %>% 
+               filter(name == "cumulative_deaths")) +
   geom_point(data = dat_tidy %>% 
                filter(name == "cumulative_deaths")) +
   scale_y_continuous(name = "Deaths", labels = comma) +
@@ -67,6 +69,8 @@ cases_plot <-
                     filter(name == "C"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   color = brewer_line_color, key_glyph = "rect") +
+  geom_line(data = dat_tidy %>% 
+              filter(name == "cumulative_cases")) +
   geom_point(data = dat_tidy %>% 
                filter(name == "cumulative_cases")) +
   scale_y_continuous(name = "Cases", labels = comma) +

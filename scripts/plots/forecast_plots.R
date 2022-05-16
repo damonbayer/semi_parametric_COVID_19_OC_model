@@ -6,6 +6,7 @@ library(scales)
 library(latex2exp)
 library(cowplot)
 source("src/plot_functions.R")
+library(lubridate)
 
 dat <- 
   read_csv("data/oc_data.csv") %>% 
@@ -79,7 +80,15 @@ dat_tidy_tmp <-
 
 
 
-make_weeks_ahead_forecast_comparison_plot <- function(weeks_ahead = 4) {
+make_weeks_ahead_forecast_comparison_plot <- function(weeks_ahead = 4, zoom = F) {
+  if (zoom) {
+    weeks_ahead_dat_tmp <- weeks_ahead_dat_tmp %>% 
+      filter(date >= ymd("2020-11-15"),
+             date <= ymd("2020-12-31"))
+    dat_tidy_tmp <- dat_tidy_tmp %>% 
+      filter(date >= ymd("2020-11-15"),
+             date <= ymd("2020-12-31"))
+  }
   cases_forecast_comparison_plot <- 
     weeks_ahead_dat_tmp %>% 
     filter(`Weeks Ahead` == weeks_ahead,
@@ -123,13 +132,14 @@ make_weeks_ahead_forecast_comparison_plot <- function(weeks_ahead = 4) {
     my_theme
   
   
-  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_test_positivity_forecasts_comparison_plot.pdf"),
+  
+  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_zoom=", zoom, "_test_positivity_forecasts_comparison_plot.pdf"),
                        plot = test_positivity_forecast_comparison_plot,
                        base_asp = 16/9)
-  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_cases_forecasts_comparison_plot.pdf"),
+  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_zoom=", zoom, "_cases_forecasts_comparison_plot.pdf"),
                        plot = cases_forecast_comparison_plot,
                        base_asp = 16/9)
-  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_deaths_forecasts_comparison_plot.pdf"),
+  save_plot_target_asp(filename = str_c("figures/advancement_slides/", weeks_ahead, "_weeks_ahead_zoom=", zoom, "_deaths_forecasts_comparison_plot.pdf"),
                        plot = deaths_forecast_comparison_plot,
                        base_asp = 16/9)
 
@@ -211,5 +221,8 @@ make_weeks_ahead_forecast_plot <- function(weeks_ahead = 4, use_tests = T) {
                        plot = test_positivity_forecast_single_plot,
                        base_asp = 16/9)
 }
+
 walk(4:0, make_weeks_ahead_forecast_plot)
 walk(4:0, make_weeks_ahead_forecast_comparison_plot)
+walk(4:0, ~make_weeks_ahead_forecast_comparison_plot(weeks_ahead = ., zoom = T))
+

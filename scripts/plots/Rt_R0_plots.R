@@ -57,7 +57,7 @@ Rt_plot <-
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
-  scale_y_continuous(name = my_labeller["Rₜ_tt"], limits = c(0.25, 3)) +
+  scale_y_continuous(name = my_labeller["Rₜ_t"], limits = c(0.25, 3)) +
   ggtitle("Posterior Effective Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   my_theme +
