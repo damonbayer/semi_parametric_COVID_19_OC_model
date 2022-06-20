@@ -2,8 +2,14 @@ library(tidyverse)
 library(fs)
 library(tidybayes)
 
-model_design <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
-file_path <- dir_ls("results/posterior_predictive//")[model_design]
+target_model_design <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
+
+file_path <- tibble(file_path = dir_ls("results/posterior_predictive//")) %>% 
+  mutate(model_design = file_path %>% 
+           str_extract("(?<=model_design=)\\d+") %>% 
+           as.integer()) %>% 
+  filter(model_design == target_model_design) %>% 
+  pull(file_path)
 
 ci_widths <- c(0.5, 0.8, 0.95)
 
@@ -51,7 +57,6 @@ tidy_predictive_file <- function(file_name) {
     drop_na()
 }
 
-
 prep_predictive_for_plotting <- function(tidy_predictive, index_date_conversion) {
   tidy_predictive %>% 
     select(index, name, value) %>% 
@@ -63,10 +68,31 @@ prep_predictive_for_plotting <- function(tidy_predictive, index_date_conversion)
     mutate(name = fct_inorder(name))
 }
 
-pp_for_plotting <-
-  tidy_predictive_file(file_path) %>% 
-  prep_predictive_for_plotting(index_date_conversion = index_date_conversion)
+score_predictions <- function(tidy_predictive, index_date_conversion) {
+  tidy_predictive %>% 
+    filter(name != "test_positivity") %>% 
+    group_by(index, name) %>% 
+    summarize(pp_draws = list(value),
+              .groups = "drop") %>% 
+    left_join(dat %>%
+                select(index, date, cases, deaths) %>% 
+                pivot_longer(-c(index, date), values_to = "obs_value")) %>% 
+    mutate(ll = map2_dbl(obs_value, pp_draws, ~log(mean(.x == .y)))) %>% 
+    left_join(index_date_conversion) %>% 
+    select(date, name, ll) %>% 
+    pivot_wider(names_from = name, values_from = ll, names_prefix = "ll_")
+}
+
+tidy_predictive <- tidy_predictive_file(file_name)
+
+pp_for_plotting <- prep_predictive_for_plotting(tidy_predictive = tidy_predictive,
+                                                index_date_conversion = index_date_conversion)
+
+prediction_score <- score_predictions(tidy_predictive = tidy_predictive,
+                                      index_date_conversion = index_date_conversion)
 
 dir_create("results/tidy_posterior_predictive")
-
 write_csv(pp_for_plotting, str_replace_all(file_path, "posterior_predictive", "tidy_posterior_predictive"))
+
+dir_create("results/prediction_scores")
+write_csv(prediction_scores, str_replace_all(file_path, "posterior_predictive", "prediction_scores"))
