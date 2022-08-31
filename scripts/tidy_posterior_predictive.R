@@ -83,7 +83,7 @@ score_predictions <- function(tidy_predictive, index_date_conversion) {
     pivot_wider(names_from = name, values_from = ll, names_prefix = "ll_")
 }
 
-tidy_predictive <- tidy_predictive_file(file_name)
+tidy_predictive <- tidy_predictive_file(file_path)
 
 pp_for_plotting <- prep_predictive_for_plotting(tidy_predictive = tidy_predictive,
                                                 index_date_conversion = index_date_conversion)
@@ -94,5 +94,5 @@ prediction_score <- score_predictions(tidy_predictive = tidy_predictive,
 dir_create("results/tidy_posterior_predictive")
 write_csv(pp_for_plotting, str_replace_all(file_path, "posterior_predictive", "tidy_posterior_predictive"))
 
-dir_create("results/prediction_scores")
-write_csv(prediction_scores, str_replace_all(file_path, "posterior_predictive", "prediction_scores"))
+dir_create("results/prediction_score")
+write_csv(prediction_score, str_replace_all(file_path, "posterior_predictive", "prediction_score"))
