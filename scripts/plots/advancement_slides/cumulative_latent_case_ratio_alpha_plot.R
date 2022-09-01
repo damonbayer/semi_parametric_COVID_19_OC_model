@@ -45,7 +45,6 @@ vector_gq_path <-
          use_tests == T) %>% 
   pull(full_path)
 
-\
 vector_gq <- 
   read_csv(vector_gq_path) %>% 
   filter(date <= max_date) %>% 
