@@ -2,12 +2,15 @@ library(ggplot2)
 library(cowplot)
 library(scales)
 library(latex2exp)
+library(fs)
 theme_set(theme_minimal_grid())
 save_plot_target_asp <- function (filename, plot, ncol = 1, nrow = 1, base_height = 3.71,
                                   base_asp = 1730/650, base_width = NULL) {
   cowplot::save_plot(filename, plot, ncol = ncol, nrow = nrow, base_height = base_height,
                      base_asp = base_asp * nrow / ncol, base_width = base_width)
 }
+
+figures_dir <- path("~/Documents/semi_parametric_COVID_19_OC_manuscript/figures")
 
 my_theme <- list(
   scale_fill_brewer(name = "Credible Interval Width",

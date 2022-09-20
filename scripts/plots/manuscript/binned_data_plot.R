@@ -33,11 +33,8 @@ binned_data_plot <-
                      limits = c(0, NA)) +
   scale_x_date(name = "Date", date_breaks, date_labels = date_labels) +
   patchwork::plot_layout(ncol = 2, nrow = 2) +
-  patchwork::plot_annotation(title = str_c("Orange County", ", CA data"),
+  patchwork::plot_annotation(title = str_c("Orange County", ", CA Data"),
                              subtitle = "Counts binned into weekly periods")
 
-save_plot_target_asp(filename = "figures/advancement_slides/binned_data_plot.pdf",
-                     plot = binned_data_plot, 
-                     ncol = 2,
-                     nrow = 2,
-                     base_asp = 1)
+
+save_plot(filename = path(figures_dir, "binned_data_plot", ext = "pdf"), plot = binned_data_plot, ncol = 2, nrow = 2)
