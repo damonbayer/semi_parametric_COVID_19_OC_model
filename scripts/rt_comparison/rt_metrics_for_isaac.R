@@ -10,26 +10,26 @@ rt_truth <-
   select(time, Rt = value)
 
 
-full_model_cis <- 
-  tibble(full_path = dir_ls("results/simulated_generated_quantities_summary")) %>% 
-  filter(full_path %>% str_detect("prior", negate = T)) %>% 
-  mutate(sim_id = full_path %>% 
-           str_extract("(?<=seed=)\\d+") %>% 
-           as.numeric()) %>% 
-  arrange(sim_id) %>% 
-  mutate(ci = map(full_path,
-                  ~read_csv(.) %>% 
-                    select(name_raw = parameters,
-                           .lower = `10.0%`,
-                           .upper = `90.0%`) %>% 
-                    filter(name_raw %>% str_starts("Rₜ_t")) %>% 
-                    mutate(name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])") %>% str_remove("data_"),
-                           time = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-                    select(time, .lower, .upper))) %>% 
-  select(-full_path) %>% 
-  unnest(ci) %>% 
-  mutate(.width = 0.8,
-         method = "full")
+# full_model_cis <- 
+#   tibble(full_path = dir_ls("results/simulated_generated_quantities_summary")) %>% 
+#   filter(full_path %>% str_detect("prior", negate = T)) %>% 
+#   mutate(sim_id = full_path %>% 
+#            str_extract("(?<=seed=)\\d+") %>% 
+#            as.numeric()) %>% 
+#   arrange(sim_id) %>% 
+#   mutate(ci = map(full_path,
+#                   ~read_csv(.) %>% 
+#                     select(name_raw = parameters,
+#                            .lower = `10.0%`,
+#                            .upper = `90.0%`) %>% 
+#                     filter(name_raw %>% str_starts("Rₜ_t")) %>% 
+#                     mutate(name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])") %>% str_remove("data_"),
+#                            time = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
+#                     select(time, .lower, .upper))) %>% 
+#   select(-full_path) %>% 
+#   unnest(ci) %>% 
+#   mutate(.width = 0.8,
+#          method = "full")
 
 
 
@@ -43,5 +43,5 @@ full_model_cis <-
 
 
 # ISAAC TO DO: compute metrics --------------------------------------------
-
+# Envelope, MCIW, Absolute Deviation, MASV
 
