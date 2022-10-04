@@ -65,7 +65,7 @@ posterior_predictive <-
   pivot_longer(-c(iteration, chain, draw), names_to = "name_raw") %>% 
   mutate(name_raw = str_remove(name_raw, "data_new_|data_")) %>% 
   mutate(name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])"),
-         index = name_raw%>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
+         index = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
   relocate(chain, iteration, draw, name, index, value) %>% 
   rename_with(~str_c(".", .), c(iteration, chain, draw))
 

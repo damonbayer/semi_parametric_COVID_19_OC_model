@@ -114,17 +114,6 @@ deaths_plot <-
   my_theme +
   theme(legend.position = c(0.1, 0.8))
 
-seroprev_interval <-
-  vector_gq %>% 
-  filter(name == "C",
-         date == cases_annotation_x_end,
-         .width == 0.95) %>% 
-  select(value, .lower, .upper) %>% 
-  unlist() %>% 
-  `/`(popsize) %>% 
-  percent()
-
-
 cases_annotation_x <- lubridate::ymd("2020-07-01")
 
 cases_annotation_x_end <- lubridate::ymd("2020-08-16")
@@ -137,6 +126,16 @@ cases_annotation_y_end <-
          date == cases_annotation_x_end,
          .width == 0.95) %>% 
   pull(.upper)
+
+seroprev_interval <-
+  vector_gq %>% 
+  filter(name == "C",
+         date == cases_annotation_x_end,
+         .width == 0.95) %>% 
+  select(value, .lower, .upper) %>% 
+  unlist() %>% 
+  `/`(popsize) %>% 
+  percent()
 
 cases_plot <- 
   ggplot(mapping = aes(date, value)) +
@@ -187,3 +186,46 @@ save_plot(filename = path(figures_dir, "dip_plot", ext = "pdf"),
           ncol = 3,
           nrow = 1,
           base_asp = 1.25)
+
+scalar_gq_path <- 
+  tibble(full_path = dir_ls("results/tidy_scalar_generated_quantities")) %>% 
+  mutate(model_id = full_path %>% 
+           str_extract("(?<=model_id=)\\d+") %>% 
+           as.numeric()) %>% 
+  left_join(model_table %>% distinct(model_design, .keep_all = T)) %>% 
+  select(-model_id, -seed) %>% 
+  filter(constant_alpha == F,
+         constant_IFR == F,
+         constant_R0 == F,
+         double_IFR_0 == F,
+         half_alpha_0 == F,
+         half_R0_0 == F,
+         half_S_0 == F,
+         max_t == 42,
+         use_seroprev == T,
+         use_tests == T) %>% 
+  pull(full_path)
+
+scalar_gq <- 
+  read_csv(scalar_gq_path)
+
+scalar_gq %>%
+  filter(name == "ρ_death",
+         .width == 0.95)
+
+right_join(
+  vector_gq %>% 
+    filter(name == "C") %>% 
+    select(-name) %>% 
+    rename(median = value),
+  dat_tidy %>% 
+    filter(name == "cumulative_cases")) %>%
+  mutate(across(c(median, .lower, .upper), ~`/`(., value))) %>% 
+  filter(date == max(date))
+
+
+vector_gq %>% 
+  filter(name == "prevalence",
+         .width == 0.95) %>% 
+  filter(value == max(value)) %>% 
+  mutate(across(c(value, .lower, .upper), ~`/`(., popsize)))

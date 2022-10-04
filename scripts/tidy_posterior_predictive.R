@@ -46,7 +46,7 @@ tidy_predictive_file <- function(file_name) {
     pivot_longer(-c(iteration, chain, draw), names_to = "name_raw") %>% 
     mutate(name_raw = str_remove(name_raw, "data_new_|data_")) %>% 
     mutate(name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])"),
-           index = name_raw%>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
+           index = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
     select(-name_raw) %>% 
     pivot_wider(values_from = value) %>% 
     left_join(dat %>% select(index, tests)) %>% 
