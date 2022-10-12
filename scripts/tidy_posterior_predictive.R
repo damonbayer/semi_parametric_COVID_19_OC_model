@@ -1,15 +1,66 @@
 library(tidyverse)
 library(fs)
 library(tidybayes)
+library(scoringutils)
 
+score_with_override <- function (data, metrics = NULL, override = NULL, ...) {
+  check_data <- check_forecasts(data)
+  data <- check_data$cleaned_data
+  prediction_type <- check_data$prediction_type
+  forecast_unit <- check_data$forecast_unit
+  target_type <- check_data$target_type
+  metrics <- scoringutils:::check_metrics(metrics)
+  
+  if (!is.null(override)) {
+    prediction_type <- override
+    target_type <- override
+  }
+  
+  if (target_type == "binary") {
+    scores <- scoringutils:::score_binary(data = data, forecast_unit = forecast_unit, 
+                                          metrics = metrics)
+  }
+  if (prediction_type == "quantile") {
+    scores <- scoringutils:::score_quantile(data = data, forecast_unit = forecast_unit, 
+                                            metrics = metrics, ...)
+  }
+  if (prediction_type %in% c("integer", "continuous") && (target_type != 
+                                                          "binary")) {
+    scores <- scoringutils:::score_sample(data = data, forecast_unit = forecast_unit, 
+                                          metrics = metrics, prediction_type = prediction_type)
+  }
+  return(scores[])
+}
 target_model_design <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
 
-file_path <- tibble(file_path = dir_ls("results/posterior_predictive//")) %>% 
-  mutate(model_design = file_path %>% 
-           str_extract("(?<=model_design=)\\d+") %>% 
-           as.integer()) %>% 
-  filter(model_design == target_model_design) %>% 
-  pull(file_path)
+model_info <- 
+  read_csv("model_table.csv") %>% 
+  distinct(model_design, .keep_all = T) %>% 
+  select(-c(model_id, seed)) %>% 
+  left_join(
+    tibble(file_path = dir_ls("results/posterior_predictive/")) %>% 
+      mutate(model_design = file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>% 
+  group_by(constant_alpha,
+           constant_IFR,
+           constant_R0,
+           double_IFR_0,
+           half_alpha_0,
+           half_R0_0,
+           half_S_0,
+           use_seroprev,
+           use_tests) %>% 
+  nest() %>% 
+  ungroup() %>% 
+  mutate(model_group = 1:n()) %>% 
+  unnest(data) %>% 
+  filter(model_design == target_model_design)
+
+file_path <- model_info$file_path
+target_max_t <- model_info$max_t
+model_group <- model_info$model_group
 
 ci_widths <- c(0.5, 0.8, 0.95)
 
@@ -18,11 +69,6 @@ dat <-
   mutate(index = 1:n()) %>% 
   rename(date = end_date) %>% 
   select(-start_date)
-
-max_data_date <- 
-  dat %>% 
-  filter(time == 46) %>% 
-  pull(date)
 
 dat_tidy <-
   dat %>% 
@@ -71,16 +117,15 @@ prep_predictive_for_plotting <- function(tidy_predictive, index_date_conversion)
 score_predictions <- function(tidy_predictive, index_date_conversion) {
   tidy_predictive %>% 
     filter(name != "test_positivity") %>% 
-    group_by(index, name) %>% 
-    summarize(pp_draws = list(value),
-              .groups = "drop") %>% 
-    left_join(dat %>%
-                select(index, date, cases, deaths) %>% 
-                pivot_longer(-c(index, date), values_to = "obs_value")) %>% 
-    mutate(ll = map2_dbl(obs_value, pp_draws, ~log(mean(.x == .y)))) %>% 
-    left_join(index_date_conversion) %>% 
-    select(date, name, ll) %>% 
-    pivot_wider(names_from = name, values_from = ll, names_prefix = "ll_")
+    select(sample = .draw, prediction = value, name, index) %>% 
+    mutate(weeks_ahead = index - target_max_t) %>% 
+    filter(weeks_ahead > 0) %>% 
+    left_join(dat_tidy %>% 
+                rename(true_value = value) %>% 
+                left_join(index_date_conversion)) %>% 
+    mutate(model = model_group) %>% 
+    select(date, target_type = name, model, weeks_ahead, prediction, sample, true_value) %>% 
+    score_with_override(override = "continuous")
 }
 
 tidy_predictive <- tidy_predictive_file(file_path)
