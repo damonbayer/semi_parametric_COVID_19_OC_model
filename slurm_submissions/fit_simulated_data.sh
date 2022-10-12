@@ -12,7 +12,7 @@
 #SBATCH --array=1-200
 
 module purge
-module load julia-lts
+module load julia/1.8.2
 cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 julia --project --threads 1 scripts/simulation/fit_simulated_model.jl $SLURM_ARRAY_TASK_ID

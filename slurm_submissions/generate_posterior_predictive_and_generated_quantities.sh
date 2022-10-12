@@ -12,7 +12,7 @@
 #SBATCH --array=113-135
 
 module purge
-module load julia-lts
+module load julia/1.8.2
 cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 julia --project --threads 1 scripts/generate_posterior_predictive_and_generated_quantities.jl $SLURM_ARRAY_TASK_ID
