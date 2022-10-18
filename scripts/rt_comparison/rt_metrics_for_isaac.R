@@ -34,14 +34,58 @@ rt_truth <-
 
 
 # ISAAC TO DO: Rt estim and epidemia reuslts ------------------------------
-# alt_models_cis <- 
+rt_estim_cis <- tibble(full_path = dir_ls("results/simulated_rt_comparison/estimgamma")) %>% 
+  filter(full_path %>% str_detect("prior", negate = T)) %>%
+  mutate(sim_id = full_path %>%
+           str_extract("(?<=sim_id=)\\d+") %>%
+           as.numeric()) %>%
+  arrange(sim_id) %>%
+  mutate(ci = map(full_path,
+                  ~read_csv(.))) %>%
+  select(-full_path) %>%
+  unnest(ci) %>%
+  filter(.width == 0.8) %>%
+  mutate(time = time - 1)
 
-
-# all_rt_cis <- 
-#   bind_rows(full_model_cis, alt_models_cis) %>% 
-#   left_join(rt_truth)
-
+epidemia_cis <- tibble(full_path = dir_ls("results/simulated_rt_comparison/estimnormal")) %>% 
+  filter(full_path %>% str_detect("prior", negate = T)) %>%
+  mutate(sim_id = full_path %>%
+           str_extract("(?<=sim_id=)\\d+") %>%
+           as.numeric()) %>%
+  arrange(sim_id) %>%
+  mutate(ci = map(full_path,
+                  ~read_csv(.))) %>%
+  select(-full_path) %>%
+  unnest(ci) %>%
+  filter(.width == 0.8) %>% 
+  mutate(time = time - 1)
 
 # ISAAC TO DO: compute metrics --------------------------------------------
 # Envelope, MCIW, Absolute Deviation, MASV
+full_model_metrics <- full_model_cis %>%
+  left_join(rt_truth, by = "time") %>%
+  rename(true_rt = Rt) %>%
+  group_by(method, sim_id) %>%
+  group_map(~rt_metrics(.x, .x$value, .x$.upper, .x$.lower)) %>%
+  bind_rows(.id = "sim_id") %>%
+  mutate(method = "full_model")
 
+estimgamma_metrics <- rt_estim_cis %>% 
+  left_join(rt_truth, by = "time") %>%
+  rename(true_rt = Rt) %>%
+  group_by(method, sim_id) %>%
+  group_map(~rt_metrics(.x, .x$value, .x$.upper, .x$.lower)) %>%
+  bind_rows(.id = "sim_id") %>%
+  mutate(method = "estim_gamma")
+
+epidemia_metrics <- epidemia_cis %>% 
+  left_join(rt_truth, by = "time") %>%
+  rename(true_rt = Rt) %>%
+  group_by(method, sim_id) %>%
+  group_map(~rt_metrics(.x, .x$value, .x$.upper, .x$.lower)) %>%
+  bind_rows(.id = "sim_id") %>%
+  mutate(method = "epidemia")
+
+write_csv(full_model_metrics, here::here("results", "full_model_metrics.csv"))
+write_csv(estimgamma_metrics, here::here("results", "estimgamma_metrics.csv"))
+write_csv(epidemia_metrics, here::here("results", "epidemia_metrics.csv"))
