@@ -3,14 +3,17 @@ library(latex2exp)
 source("src/plot_functions.R")
 set.seed(4)
 
+expit <- function(x)  1/(1+exp(-x))
+logit <- function(x) -log(1/x - 1)
+
 ifr_bar_tbl <-
   tibble(ifr_bar = cumsum(
-    c(stemr::logit(0.05),
+    c(logit(0.05),
       rnorm(5, sd = 0.3)))) %>%
   mutate(l = row_number())
 
 ifr_t_tbl <- ifr_bar_tbl %>%
-  transmute(ifr_t = stemr::expit(ifr_bar),
+  transmute(ifr_t = expit(ifr_bar),
             t = (l - 1) * 7)
 
 gmrf_example <-
