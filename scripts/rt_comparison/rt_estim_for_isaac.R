@@ -1,6 +1,6 @@
 library(tidyverse)
 target_sim_id <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
-
+source(here::here("src", "damon_functions.R"))
 oc_data <- read_csv("data/oc_data.csv")
 
 # Load data for target_sim_id 

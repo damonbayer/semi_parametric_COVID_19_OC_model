@@ -1,5 +1,6 @@
 library(tidyverse)
 library(fs)
+source(here::here("src", "damon_functions.R"))
 
 rt_truth <- 
   read_csv("data/simulated_data/true_generated_quantities_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
