@@ -1,7 +1,7 @@
 library(tidyverse)
 library(fs)
 target_sim_id <- ifelse(length(commandArgs(trailingOnly = TRUE)) == 0, 1, as.integer(commandArgs(trailingOnly = TRUE[1])))
-source("src/damon_functions.R")
+source("src/rt_comparison_functions.R")
 oc_data <- read_csv("data/oc_data.csv")
 
 # Load data for target_sim_id
