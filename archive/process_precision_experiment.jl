@@ -32,14 +32,14 @@ ess_per_sec_sum = sum.([e.nt.ess_per_sec for e in ess])
 rhat_sum = sum.([e.nt.rhat for e in ess])
 
 ess_sum / maximum(ess_sum)
-1, 2, 3, 4 viable. 1 and 3 preferred
-hp model preferred
+# 1, 2, 3, 4 viable. 1 and 3 preferred
+# hp model preferred
 
 ess_per_sec_sum / maximum(ess_per_sec_sum)
-1, 2, 3, 4 viable. 2 and 4 prefferred
+# 1, 2, 3, 4 viable. 2 and 4 prefferred
 # lets go hp hp
 rhat_sum
-2 and 3 preferred
+# 2 and 3 preferred
 
 sortperm(sum.([e.nt.ess_per_sec for e in ess]), rev = true)
 sortperm(sum.([e.nt.ess for e in ess]), rev = true)
