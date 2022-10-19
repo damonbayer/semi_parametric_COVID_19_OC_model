@@ -49,7 +49,7 @@ latent_curves %>%
 
 data_ifr_age_structure_plot <-
   ggplot(mapping = aes(t, value)) +
-  facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title())) +
+  facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()), ncol = 1) +
   geom_line(
     mapping = aes(color = population),
     data = latent_curves %>%
@@ -59,24 +59,10 @@ data_ifr_age_structure_plot <-
   geom_point(data = dat) +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_continuous(name = "Time") +
-  labs(color = "Age Group") +
+  labs(color = "Population Group") +
   theme_minimal_grid() +
   ggtitle("Latent and Observed Cases and Deaths") +
   theme(legend.position = "bottom")
-
-posterior_predictive <-
-  read_csv("illustrative_examples/age_structure/data/posterior_predictive.csv") %>%
-  mutate(draw = tidybayes:::draw_from_chain_and_iteration_(chain = chain, iteration = iteration), .after = iteration) %>%
-  pivot_longer(-c(iteration, chain, draw), names_to = "name_raw") %>%
-  mutate(name_raw = str_remove(name_raw, "data_new_|data_")) %>%
-  mutate(
-    name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])"),
-    index = name_raw %>%
-      str_extract("(?<=\\[)\\d+(?=\\])") %>%
-      as.numeric()
-  ) %>%
-  relocate(chain, iteration, draw, name, index, value) %>%
-  rename_with(~ str_c(".", .), c(iteration, chain, draw))
 
 generated_quantities <-
   read_csv("illustrative_examples/age_structure/data/generated_quantities.csv") %>%
@@ -121,20 +107,15 @@ posterior_ifr_age_structure_plot <-
   ) +
   my_theme
 
-save_plot_target_asp(
-  filename = "figures/advancement_slides/data_ifr_age_structure_plot.pdf",
+save_plot(
+  filename = path(figures_dir, "data_ifr_age_structure_plot", ext = "pdf"),
   plot = data_ifr_age_structure_plot,
-  ncol = 2,
-  nrow = 1,
-  base_height = 4,
-  base_asp = 12 / 9
+  ncol = 1,
+  nrow = 2
 )
 
-save_plot_target_asp(
-  filename = "figures/advancement_slides/posterior_ifr_age_structure_plot.pdf",
+save_plot(
+  filename = path(figures_dir, "posterior_ifr_age_structure_plot", ext = "pdf"),
   plot = posterior_ifr_age_structure_plot,
-  ncol = 1,
-  nrow = 1,
-  base_height = 6,
-  base_asp = 12 / 9
+  base_asp = 2
 )
