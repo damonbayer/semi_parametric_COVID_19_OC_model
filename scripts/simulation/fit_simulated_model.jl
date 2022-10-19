@@ -32,8 +32,7 @@ simulated_dict_seed_1 = @dict seed max_t use_tests use_seroprev constant_R0 cons
 seed = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 
 ## Control Parameters
-# n_samples = 10_000
-n_samples = 10_0
+n_samples = 10_000
 n_chains = 4
 
 ## Define Prior Constants
@@ -43,7 +42,7 @@ include(projectdir("src/prior_constants.jl"))
 Turing.setadbackend(:forwarddiff)
 include(projectdir("src/seirdc_log_ode.jl"))
 
-## Load Data 
+## Load Data
 include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird.jl"))
 
@@ -70,11 +69,10 @@ Random.seed!(seed)
 MAP_noise = [randn(length(MAP_init)) for x in 1:n_chains]
 
 Random.seed!(seed)
-# posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
-posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 1, thin = 1, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
-posterior_samples_summary = innerjoin(DataFrame.(describe(posterior_samples, q = [0.1, 0.9]))..., on = :parameters)
+posterior_samples = sample(my_model_simulated, alg, MCMCThreads(), n_samples, n_chains, discard_initial = 10_000, thin = 10, init_params = repeat([MAP_init], n_chains) * 0.95 + MAP_noise * 0.05)
+posterior_samples_summary = innerjoin(DataFrame.(describe(posterior_samples, q = [0.1, 0.5, 0.9]))..., on = :parameters)
 CSV.write(resultsdir("simulated_posterior_samples_summary", savename("simulated_posterior_samples_summary", simulated_dict, "csv")), posterior_samples_summary)
 
 generated_quantities = get_gq_chains(my_model_simulated_gq, posterior_samples)
-generated_quantities_summary = innerjoin(DataFrame.(describe(generated_quantities, q = [0.1, 0.9]))..., on = :parameters)
+generated_quantities_summary = innerjoin(DataFrame.(describe(generated_quantities, q = [0.1, 0.5, 0.9]))..., on = :parameters)
 CSV.write(resultsdir("simulated_generated_quantities_summary", savename("simulated_generated_quantities_summary", simulated_dict, "csv")), generated_quantities_summary)
