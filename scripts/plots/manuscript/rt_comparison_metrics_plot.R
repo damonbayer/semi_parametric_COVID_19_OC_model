@@ -38,5 +38,5 @@ masv_plot <-
 
 rt_comparison_metrics_plot <- plot_grid(envelope_plot, mciw_plot, abs_dev_plot, masv_plot, align = "hv", nrow = 2, ncol = 2)
 
-save_plot(filename = "~/Documents/semi_parametric_COVID_19_OC_manuscript/figures/rt_comparison_metrics_plot.pdf",
+save_plot(filename = path(figures_dir, "rt_comparison_metrics_plot", ext = "pdf"),
           plot = rt_comparison_metrics_plot, ncol = 2, nrow = 2)
