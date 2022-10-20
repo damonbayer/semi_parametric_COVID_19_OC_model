@@ -92,10 +92,13 @@ test_positivity_plot <-
                                       constant_R0 = "Constant $R_0$",
                                       constant_alpha = "Constant $\\alpha",
                                       constant_IFR  = "Constant $\\eta$"))) +
-  ggtitle("Test Positivity - Sensitivity Analysis", subtitle = "80% Posterior Predictive Credible Intervals")
+  ggtitle("Test Positivity - Sensitivity Analysis", subtitle = "80% Posterior Predictive Credible Intervals") +
+  theme(legend.position = "none")
 
 
-combined_plot <- 
+compare_constant_time_varying_posterior_predictive_plot <- 
   plot_grid(test_positivity_plot, deaths_plot, align = "hv", nrow = 2, ncol = 1)
 
-save_plot(path(figures_dir, ))
+save_plot(filename = path(figures_dir, "compare_constant_time_varying_posterior_predictive_plot", ext = "pdf"),
+          plot = compare_constant_time_varying_posterior_predictive_plot,
+          ncol = 1, nrow = 2, base_asp = 2)
