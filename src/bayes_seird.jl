@@ -31,15 +31,15 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   end
 
   # Priors
-  R0_params_non_centered ~ MvNormal(l_param_change_times + 2, 1) # +2, 1 for var, 1 for init
-  IFR_t_params_non_centered ~ MvNormal(l_param_change_times + 2, 1) # +2, 1 for var, 1 for init
-  
+  R0_params_non_centered ~ MvNormal(l_param_change_times_R0 + 2, 1) # +2, 1 for var, 1 for init
+  IFR_t_params_non_centered ~ MvNormal(l_param_change_times_IFR + 2, 1) # +2, 1 for var, 1 for init
+
   if use_tests
-    α_t_params_non_centered ~ MvNormal(l_param_change_times + 2, 1) # +2, 1 for var, 1 for init  
+    α_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1) # +2, 1 for var, 1 for init
   else
-    ρ_cases_t_params_non_centered ~ MvNormal(l_param_change_times + 2, 1) # +2, 1 for var, 1 for init  
+    ρ_cases_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1) # +2, 1 for var, 1 for init
   end
-  
+
   S_SEI_non_centered ~ Normal()
   I_EI_non_centered ~ Normal()
   dur_latent_non_centered ~ Normal()
@@ -58,7 +58,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   else
     ϕ_cases_nb = exp(ϕ_cases_non_centered * ϕ_cases_nb_non_centered_sd + ϕ_cases_nb_non_centered_mean)
   end
-    
+
   ϕ_deaths = exp(ϕ_deaths_non_centered * ϕ_deaths_non_centered_sd + ϕ_deaths_non_centered_mean)
 
   if !constant_R0
@@ -66,13 +66,13 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
     σ_R0 = exp(σ_R0_non_centered * σ_R0_non_centered_sd + σ_R0_non_centered_mean)
     log_R0_steps_non_centered = R0_params_non_centered[3:end]
   end
-  
+
   if !constant_IFR
     σ_IFR_non_centered = IFR_t_params_non_centered[2]
     σ_IFR = exp(σ_IFR_non_centered * σ_IFR_non_centered_sd + σ_IFR_non_centered_mean)
     logit_IFR_t_steps_non_centered = IFR_t_params_non_centered[3:end]
   end
-  
+
   if use_tests
     α_init_non_centered = α_t_params_non_centered[1]
     α_init = exp(α_init_non_centered * α_init_non_centered_sd + α_init_non_centered_mean)
@@ -91,7 +91,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
       σ_ρ_cases_non_centered = ρ_cases_t_params_non_centered[2]
       σ_ρ_cases = exp(σ_ρ_cases_non_centered * σ_ρ_cases_non_centered_sd + σ_ρ_cases_non_centered_mean)
       logit_ρ_cases_t_steps_non_centered = ρ_cases_t_params_non_centered[3:end]
-      ρ_cases_t_values_with_init = vcat(ρ_cases_init, exp.(logit(ρ_cases_init) .+ cumsum(vec(logit_ρ_cases_t_steps_non_centered) * σ_ρ_cases)))  
+      ρ_cases_t_values_with_init = vcat(ρ_cases_init, exp.(logit(ρ_cases_init) .+ cumsum(vec(logit_ρ_cases_t_steps_non_centered) * σ_ρ_cases)))
     end
   end
 
@@ -100,9 +100,9 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
 
   IFR_init_non_centered = IFR_t_params_non_centered[1]
   IFR_init = logistic(IFR_init_non_centered * IFR_init_non_centered_sd + IFR_init_non_centered_mean)
-  
+
   β_init = R₀_init * ν
-  
+
   S_SEI = logistic(S_SEI_non_centered * S_SEI_non_centered_sd + S_SEI_non_centered_mean)
   I_EI = logistic(I_EI_non_centered * I_EI_non_centered_sd + I_EI_non_centered_mean)
   S_init = S_SEI * popsize
@@ -114,7 +114,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   if !constant_R0
     β_t_values_no_init = exp.(log(R₀_init) .+ cumsum(vec(log_R0_steps_non_centered) * σ_R0)) * ν
   end
-  
+
   if !constant_IFR
     IFR_t_values_no_init = logistic.(logit(IFR_init) .+ cumsum(vec(logit_IFR_t_steps_non_centered) * σ_IFR))
   end
@@ -122,7 +122,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   function param_affect_β_IFR!(integrator)
     ind_t = searchsortedfirst(param_change_times, integrator.t) # Find the index of param_change_times that contains the current timestep
     if !constant_R0
-      integrator.p[1] = β_t_values_no_init[ind_t] # Replace β with a new value from β_t_values  
+      integrator.p[1] = β_t_values_no_init[ind_t] # Replace β with a new value from β_t_values
     end
     if !constant_IFR
       integrator.p[4] = IFR_t_values_no_init[ind_t] # Replace IFR with a new value from IFR_t_values
@@ -136,11 +136,11 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
     tspan = (0.0, obstimes[end]))
 
   if extra_ode_precision
-    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-11, reltol = 1e-8)  
+    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-11, reltol = 1e-8)
   else
-    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-9, reltol = 1e-6)  
+    sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-9, reltol = 1e-6)
   end
-  
+
   # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
   if sol.retcode != :Success
     Turing.@addlogprob! -Inf
@@ -172,7 +172,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
     compartments_at_seroprev_times = [exp.(sol.u[findfirst(sol.t .== seroprev_time)]) for seroprev_time in seroprev_times] # Collect S, E, I, R, D, C at seroprev_times
     seroprev_mean = [compartments[4] / sum(compartments[1:4]) for compartments in compartments_at_seroprev_times]
   end
-  
+
   for i in 1:l_incidence
     data_new_deaths[i] ~ NegativeBinomial2(max(deaths_mean[i], 0.0), ϕ_deaths) # In exploratory phase of MCMC, sometimes you get weird numerical errors
     if use_tests
@@ -187,7 +187,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
       data_seroprev_cases[i] ~ Binomial(seroprev_tests[i], seroprev_mean[i])
     end
   end
-  
+
   # Generated quantities
   gq = (
     S_SEI = S_SEI,
@@ -235,7 +235,7 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   else
     gq = merge(gq, (IFR_t = vcat(IFR_init, IFR_t_values_no_init), σ_IFR = σ_IFR))
   end
-  
+
   if use_seroprev
     gq = merge(gq, (seroprev_mean = seroprev_mean,))
   end
