@@ -13,19 +13,19 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   l_param_change_times = length(param_change_times)
 
   if constant_R0
-    l_param_change_times_R0 = -1
+    l_param_change_times_R0 = 0
   else
     l_param_change_times_R0 = l_param_change_times
   end
 
   if constant_alpha
-    l_param_change_times_alpha = -1
+    l_param_change_times_alpha = 0
   else
     l_param_change_times_alpha = l_param_change_times
   end
 
   if constant_IFR
-    l_param_change_times_IFR = -1
+    l_param_change_times_IFR = 0
   else
     l_param_change_times_IFR = l_param_change_times
   end
