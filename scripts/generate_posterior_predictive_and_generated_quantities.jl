@@ -14,12 +14,18 @@ using semi_parametric_COVID_19_OC_model
 
 mkpath(resultsdir("posterior_predictive"))
 mkpath(resultsdir("generated_quantities"))
+mkpath(resultsdir("prior_predictive"))
+mkpath(resultsdir("prior_generated_quantities"))
 
 model_table = CSV.read("model_table.csv", DataFrame)
 
 model_dicts = [Dict(names(model_table_row) .=> values(model_table_row)) for model_table_row in eachrow(subset(model_table, :model_design => ByRow(x -> x == model_design)))]
-files_to_read = [resultsdir("posterior_samples", savename("posterior_samples", model_dict, "jld2")) for model_dict in model_dicts]
-posterior_samples = cat([load(file_to_read)["posterior_samples"] for file_to_read in files_to_read]..., dims=3)
+
+posterior_files_to_read = [resultsdir("posterior_samples", savename("posterior_samples", model_dict, "jld2")) for model_dict in model_dicts]
+posterior_samples = cat([load(file_to_read)["posterior_samples"] for file_to_read in posterior_files_to_read]..., dims=3)
+
+prior_files_to_read = [resultsdir("prior_samples", savename("prior_samples", model_dict, "jld2")) for model_dict in model_dicts]
+prior_samples = cat([load(file_to_read)["prior_samples"] for file_to_read in prior_files_to_read]..., dims=3)
 
 model_dict = model_dicts[1]
 delete!(model_dict, "seed")
@@ -47,6 +53,7 @@ my_model_forecast = bayes_seird(data_new_deaths_forecast, data_new_cases_forecas
 my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 
 augmented_posterior_samples = augment_chains_with_forecast_samples(posterior_samples, my_model, my_model_forecast, "randn")
+augmented_prior_samples = augment_chains_with_forecast_samples(prior_samples, my_model, my_model_forecast, "randn")
 
 Random.seed!(1)
 posterior_predictive = predict(my_model_forecast_missing, augmented_posterior_samples)
@@ -55,3 +62,11 @@ CSV.write(resultsdir("posterior_predictive", savename("posterior_predictive", mo
 Random.seed!(1)
 generated_quantities = get_gq_chains(my_model_forecast, augmented_posterior_samples)
 CSV.write(resultsdir("generated_quantities", savename("generated_quantities", model_dict, "csv")), DataFrame(generated_quantities))
+
+Random.seed!(1)
+prior_predictive = predict(my_model_forecast_missing, augmented_prior_samples)
+CSV.write(resultsdir("prior_predictive", savename("prior_predictive", model_dict, "csv")), DataFrame(prior_predictive))
+
+Random.seed!(1)
+prior_generated_quantities = get_gq_chains(my_model_forecast, augmented_prior_samples)
+CSV.write(resultsdir("prior_generated_quantities", savename("prior_generated_quantities", model_dict, "csv")), DataFrame(prior_generated_quantities))

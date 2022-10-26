@@ -38,8 +38,14 @@ model_info <-
   distinct(model_design, .keep_all = T) %>% 
   select(-c(model_id, seed)) %>% 
   left_join(
-    tibble(file_path = dir_ls("results/posterior_predictive/")) %>% 
-      mutate(model_design = file_path %>% 
+    tibble(posterior_file_path = dir_ls("results/posterior_predictive/")) %>% 
+      mutate(model_design = posterior_file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>%
+  left_join(
+    tibble(prior_file_path = dir_ls("results/prior_predictive/")) %>% 
+      mutate(model_design = prior_file_path %>% 
                str_extract("(?<=model_design=)\\d+") %>% 
                as.integer())
   ) %>% 
@@ -58,7 +64,8 @@ model_info <-
   unnest(data) %>% 
   filter(model_design == target_model_design)
 
-file_path <- model_info$file_path
+posterior_file_path <- model_info$posterior_file_path
+prior_file_path <- model_info$prior_file_path
 target_max_t <- model_info$max_t
 model_group <- model_info$model_group
 
@@ -128,16 +135,22 @@ score_predictions <- function(tidy_predictive, index_date_conversion) {
     score_with_override(override = "continuous")
 }
 
-tidy_predictive <- tidy_predictive_file(file_path)
+tidy_posterior_predictive <- tidy_predictive_file(posterior_file_path)
+tidy_prior_predictive <- tidy_predictive_file(prior_file_path)
 
-pp_for_plotting <- prep_predictive_for_plotting(tidy_predictive = tidy_predictive,
-                                                index_date_conversion = index_date_conversion)
+posterior_predictive_for_plotting <- prep_predictive_for_plotting(tidy_predictive = tidy_posterior_predictive,
+                                                                  index_date_conversion = index_date_conversion)
+prior_predictive_for_plotting <- prep_predictive_for_plotting(tidy_predictive = tidy_prior_predictive,
+                                                                  index_date_conversion = index_date_conversion)
 
 prediction_score <- score_predictions(tidy_predictive = tidy_predictive,
                                       index_date_conversion = index_date_conversion)
 
 dir_create("results/tidy_posterior_predictive")
-write_csv(pp_for_plotting, str_replace_all(file_path, "posterior_predictive", "tidy_posterior_predictive"))
+write_csv(posterior_predictive_for_plotting, str_replace_all(posterior_file_path, "posterior_predictive", "tidy_posterior_predictive"))
+
+dir_create("results/tidy_prior_predictive")
+write_csv(prior_predictive_for_plotting, str_replace_all(prior_file_path, "prior_predictive", "tidy_prior_predictive"))
 
 dir_create("results/prediction_score")
 write_csv(prediction_score, str_replace_all(file_path, "posterior_predictive", "prediction_score"))

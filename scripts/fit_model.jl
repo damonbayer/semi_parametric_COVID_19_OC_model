@@ -37,12 +37,20 @@ include(projectdir("src/prior_constants.jl"))
 Turing.setadbackend(:forwarddiff)
 include(projectdir("src/seirdc_log_ode.jl"))
 
-## Load Data 
+## Load Data
 include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird.jl"))
 
 ## Create Models
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
+
+# Sample Prior
+Random.seed!(seed)
+prior_samples = sample(my_model, Prior(), 1_000)
+mkpath(resultsdir("prior_samples"))
+wsave(resultsdir("prior_samples", savename("prior_samples", model_dict, "jld2")), @dict prior_samples)
+
+# Fit Posterior
 MAP_init = optimize_many_MAP(my_model, 10, 1, true)[1]
 
 if use_tests

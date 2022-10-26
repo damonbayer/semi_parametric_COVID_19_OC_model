@@ -1,15 +1,72 @@
 library(tidyverse)
 library(fs)
 library(tidybayes)
+target_model_design <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
 
-model_design <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 1, as.integer(commandArgs(trailingOnly=T[1])))
-file_path <- tibble(full_path = dir_ls("results/generated_quantities/")) %>% 
-  mutate(obs_model_design = full_path %>% 
-           str_extract("(?<=model_design=)\\d+") %>%
-           as.integer()) %>% 
-  filter(obs_model_design == model_design) %>% 
-  slice(1) %>% 
-  pull(full_path)
+model_info <- 
+  read_csv("model_table.csv") %>% 
+  distinct(model_design, .keep_all = T) %>% 
+  select(-c(model_id, seed)) %>% 
+  left_join(
+    tibble(posterior_file_path = dir_ls("results/posterior_predictive/")) %>% 
+      mutate(model_design = posterior_file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>%
+  left_join(
+    tibble(prior_file_path = dir_ls("results/prior_predictive/")) %>% 
+      mutate(model_design = prior_file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>% 
+  group_by(constant_alpha,
+           constant_IFR,
+           constant_R0,
+           double_IFR_0,
+           half_alpha_0,
+           half_R0_0,
+           half_S_0,
+           use_seroprev,
+           use_tests) %>% 
+  nest() %>% 
+  ungroup() %>% 
+  mutate(model_group = 1:n()) %>% 
+  unnest(data) %>% 
+  filter(model_design == target_model_design)
+
+model_info <- 
+  read_csv("model_table.csv") %>% 
+  distinct(model_design, .keep_all = T) %>% 
+  select(-c(model_id, seed)) %>% 
+  left_join(
+    tibble(posterior_file_path = dir_ls("results/generated_quantities/")) %>% 
+      mutate(model_design = posterior_file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>%
+  left_join(
+    tibble(prior_file_path = dir_ls("results/prior_generated_quantities/")) %>% 
+      mutate(model_design = prior_file_path %>% 
+               str_extract("(?<=model_design=)\\d+") %>% 
+               as.integer())
+  ) %>% 
+  group_by(constant_alpha,
+           constant_IFR,
+           constant_R0,
+           double_IFR_0,
+           half_alpha_0,
+           half_R0_0,
+           half_S_0,
+           use_seroprev,
+           use_tests) %>% 
+  nest() %>% 
+  ungroup() %>% 
+  mutate(model_group = 1:n()) %>% 
+  unnest(data) %>% 
+  filter(model_design == target_model_design)
+
+posterior_file_path <- model_info$posterior_file_path
+prior_file_path <- model_info$prior_file_path
 
 ci_widths <- c(0.5, 0.8, 0.95)
 
@@ -80,13 +137,20 @@ prep_gq_for_plotting <- function(tidy_gq, index_date_conversion) {
        vector_intervals = vector_intervals)
 }
 
-gq_for_plotting <-
-  tidy_gq_file(file_path) %>% 
+posterior_gq_for_plotting <-
+  tidy_gq_file(posterior_file_path) %>%
   prep_gq_for_plotting(index_date_conversion = index_date_conversion)
 
+prior_gq_for_plotting <-
+  tidy_gq_file(prior_file_path) %>% 
+  prep_gq_for_plotting(index_date_conversion = index_date_conversion)
 
 dir_create("results/tidy_scalar_generated_quantities")
 dir_create("results/tidy_vector_generated_quantities")
+dir_create("results/tidy_scalar_prior_generated_quantities")
+dir_create("results/tidy_vector_prior_generated_quantities")
 
-write_csv(gq_for_plotting$scalar_samples, str_replace_all(file_path, "generated_quantities", "tidy_scalar_generated_quantities"))
-write_csv(gq_for_plotting$vector_intervals, str_replace_all(file_path, "generated_quantities", "tidy_vector_generated_quantities"))
+write_csv(posterior_gq_for_plotting$scalar_samples, str_replace_all(posterior_file_path, "generated_quantities", "tidy_scalar_generated_quantities"))
+write_csv(posterior_gq_for_plotting$vector_intervals, str_replace_all(posterior_file_path, "generated_quantities", "tidy_vector_generated_quantities"))
+write_csv(prior_gq_for_plotting$scalar_samples, str_replace_all(prior_file_path, "prior_generated_quantities", "tidy_scalar_prior_generated_quantities"))
+write_csv(prior_gq_for_plotting$vector_intervals, str_replace_all(prior_file_path, "prior_generated_quantities", "tidy_vector_prior_generated_quantities"))
