@@ -96,7 +96,6 @@ all_parameter_intervals <-
   mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
   mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name))
 
-                             
 all_gq_intervals <- 
   bind_rows(
     mutate(prior_gq_summary, dist = "Prior"),

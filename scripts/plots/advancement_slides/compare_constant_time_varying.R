@@ -100,7 +100,7 @@ compare_constant_time_varying_plot <-
   scale_fill_discrete(name = "Model",
                       labels = TeX(c(all_time_varying = "All Time Varying",
                                      constant_R0 = "Constant $R_0$",
-                                     constant_alpha = "Constant $\\alpha",
+                                     constant_alpha = "Constant $\\alpha$",
                                      constant_IFR  = "Constant $\\eta$"))) +
   theme(legend.position = c(0.025, 3/4))
 
