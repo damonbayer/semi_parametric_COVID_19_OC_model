@@ -4,6 +4,7 @@ library(scales)
 library(latex2exp)
 library(fs)
 library(ggdist)
+library(ggblend)
 theme_set(theme_minimal_grid())
 popsize <- 3175692
 save_plot_target_asp <- function (filename, plot, ncol = 1, nrow = 1, base_height = 3.71,
@@ -35,7 +36,8 @@ my_labeller <-
     "dur_latent_days" = "$1/\\gamma$",
     "E" = "E",
     "I" = "I",
-    "I_EI" = "Initial $\\frac{I}{E + I}$",
+    # "I_EI" = "Initial $\\frac{I}{E + I}$",
+    "I_EI" = "$\\tilde{I}_{0}$",
     "IFR_t" = "$\\eta$",
     "IFR" = "$\\eta$",
     "R" = "R",
@@ -43,7 +45,8 @@ my_labeller <-
     "R₀" = "$R_0$",
     "Rₜ_t" = "$R_t$",
     "S" = "S",
-    "S_SEI" = "Initial $\\frac{S}{S + E + I}$",
+    # "S_SEI" = "Initial $\\frac{S}{S + E + I}$",
+    "S_SEI" = "$S_0$",
     "seroprev_mean" = "Seroprev Mean",
     "α_t" = "$\\alpha$",
     "α" = "$\\alpha$",
