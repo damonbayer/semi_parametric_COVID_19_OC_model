@@ -48,32 +48,3 @@ simulated_dat <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_mo
   mutate(name = str_remove(name, "data_new_")) %>% 
   pivot_wider(names_from = name, values_from = value) %>% 
   left_join(dat %>% select(-deaths, - cases))
-
-simulated_binned_data_plot <-
-  ggplot(simulated_dat, aes(time, tests)) +
-  geom_line(size = line_size) +
-  geom_point(size = point_size) +
-  scale_y_continuous(name = "Tests", labels = comma) +
-  scale_x_continuous(name = "Time") +
-  ggplot(simulated_dat, aes(time, cases)) +
-  geom_line(size = line_size) +
-  geom_point(size = point_size) +
-  scale_y_continuous(name = "Cases", labels = comma) +
-  scale_x_continuous(name = "Time") +
-  ggplot(simulated_dat, aes(time, deaths)) +
-  geom_line(size = line_size) +
-  geom_point(size = point_size) +
-  scale_y_continuous(name = "Deaths", labels = comma) +
-  scale_x_continuous(name = "Time") +
-  ggplot(simulated_dat, aes(time, cases / tests)) +
-  geom_line(size = line_size) +
-  geom_point(size = point_size) +
-  scale_y_continuous(name = "Testing Positivity",
-                     labels = function(.) scales::percent(., accuracy = 1),
-                     limits = c(0, NA)) +
-  scale_x_continuous(name = "Time") +
-  patchwork::plot_layout(ncol = 2, nrow = 2) +
-  patchwork::plot_annotation(title = str_c("Simulated Data"),
-                             subtitle = "Counts binned into weekly periods")
-
-save_plot(filename = path(figures_dir, "simulated_binned_data_plot", ext = "pdf"), plot = simulated_binned_data_plot, ncol = 2, nrow = 2)
