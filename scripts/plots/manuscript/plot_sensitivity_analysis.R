@@ -89,7 +89,9 @@ scalar_sensitivity_plot <-
   scale_y_discrete("Model", labels = ~TeX(.)) +
   scale_color_discrete(name = "Distribution", label = str_to_title) +
   theme(legend.position = c(3/5, 1/4)) +
-  scale_x_continuous("Value")
+  scale_x_continuous("Value") +
+  ggtitle("Sensitivity Analysis Results",
+          subtitle = "80% Credible Intervals")
 
 compartments_sensitivity_plot <- 
   all_vector_gq %>% 
@@ -106,7 +108,9 @@ compartments_sensitivity_plot <-
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_date("Date") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  ggtitle("Sensitivity Analysis Results",
+          subtitle = "80% Credible Intervals")
  
 time_varying_sensitivity_plot <- 
   all_vector_gq %>% 
@@ -122,7 +126,9 @@ time_varying_sensitivity_plot <-
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   scale_y_continuous(name = "Value", labels = comma) +
   scale_x_date("Date") +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  ggtitle("Sensitivity Analysis Results",
+        subtitle = "80% Credible Intervals")
 
 save_plot(filename = path(figures_dir, "scalar_sensitivity_plot", ext = "pdf"),
           plot = scalar_sensitivity_plot,
