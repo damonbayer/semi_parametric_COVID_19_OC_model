@@ -16,6 +16,7 @@ mkpath(resultsdir("posterior_predictive"))
 mkpath(resultsdir("generated_quantities"))
 mkpath(resultsdir("prior_predictive"))
 mkpath(resultsdir("prior_generated_quantities"))
+mkpath(resultsdir("duration"))
 
 model_table = CSV.read("model_table.csv", DataFrame)
 
@@ -40,6 +41,9 @@ half_alpha_0 = model_dict["half_alpha_0"]
 half_S_0 = model_dict["half_S_0"]
 half_R0_0 = model_dict["half_R0_0"]
 
+durations = DataFrame(wall=MCMCChains.wall_duration(posterior_samples), compute = MCMCChains.compute_duration(posterior_samples))
+CSV.write(resultsdir("duration", savename("duration", model_dict, "csv")), durations)
+
 max_t_forecast = max_t + 4
 
 include(projectdir("src/prior_constants.jl"))
@@ -47,7 +51,6 @@ include(projectdir("src/seirdc_log_ode.jl"))
 include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird.jl"))
 
-# Let actually save and load these from fit_model so we know the data is the same?
 my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
 my_model_forecast = bayes_seird(data_new_deaths_forecast, data_new_cases_forecast, tests_forecast, data_seroprev_cases, seroprev_tests, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
