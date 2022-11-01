@@ -3,7 +3,9 @@ source("src/plot_functions.R")
 
 all_metrics <-
   read_csv("results/simulated_rt_comparison/simulated_rt_comparison_all_metrics.csv") %>%
-  mutate(method = fct_inorder(method))
+  mutate(method = method |> 
+           fct_inorder() |> 
+           fct_recode(`True Model` = "Full Model"))
 
 envelope_plot <-
   all_metrics %>%
