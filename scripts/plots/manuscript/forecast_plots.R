@@ -90,6 +90,10 @@ test_positivity_forecast_plot <-
   ggtitle("Test Positivity Forecasts") +
   my_theme
 
+combined_forecast_plot <- plot_grid(deaths_forecast_plot,
+                                    test_positivity_forecast_plot,
+                                    ncol = 2,
+                                    align = "hv")
 
 save_plot(
   filename = path(figures_dir, "deaths_forecast_plot", ext = "pdf"),
@@ -101,4 +105,10 @@ save_plot(
   filename = path(figures_dir, "test_positivity_forecast_plot", ext = "pdf"),
   plot = test_positivity_forecast_plot,
   ncol = 1,
+  nrow = 2)
+
+save_plot(
+  filename = path(figures_dir, "combined_forecast_plot", ext = "pdf"),
+  plot = combined_forecast_plot,
+  ncol = 2,
   nrow = 2)
