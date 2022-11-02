@@ -61,7 +61,8 @@ forecast_crps_plot <-
   guides(
     color = guide_legend(reverse = TRUE),
     linetype = guide_legend(reverse = TRUE)
-  )
+  ) +
+  ggtitle("Continuous Ranked Probability Score Comparison")
 
 
 save_plot(
