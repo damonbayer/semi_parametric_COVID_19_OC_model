@@ -31,13 +31,13 @@ prob_skeleton = ODEProblem(seirdc_log_ode!,
   end
 
   # Priors
-  R0_params_non_centered ~ MvNormal(l_param_change_times_R0 + 2, 1) # +2, 1 for var, 1 for init
-  IFR_t_params_non_centered ~ MvNormal(l_param_change_times_IFR + 2, 1) # +2, 1 for var, 1 for init
+  R0_params_non_centered ~ MvNormal(l_param_change_times_R0 + 2, 1.0 * I) # +2, 1 for var, 1 for init
+  IFR_t_params_non_centered ~ MvNormal(l_param_change_times_IFR + 2, 1.0 * I) # +2, 1 for var, 1 for init
 
   if use_tests
-    α_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1) # +2, 1 for var, 1 for init
+    α_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1.0 * I) # +2, 1 for var, 1 for init
   else
-    ρ_cases_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1) # +2, 1 for var, 1 for init
+    ρ_cases_t_params_non_centered ~ MvNormal(l_param_change_times_alpha + 2, 1.0 * I) # +2, 1 for var, 1 for init
   end
 
   S_SEI_non_centered ~ Normal()

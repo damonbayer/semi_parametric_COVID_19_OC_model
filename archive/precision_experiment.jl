@@ -6,6 +6,7 @@ using DataFrames
 using DifferentialEquations
 using DiffEqCallbacks
 using LogExpFunctions
+using LinearAlgebra
 using Turing
 using Random
 using JLD2
@@ -41,7 +42,7 @@ include(projectdir("src/prior_constants.jl"))
 Turing.setadbackend(:forwarddiff)
 include(projectdir("src/seirdc_log_ode.jl"))
 
-## Load Data 
+## Load Data
 include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird.jl"))
 

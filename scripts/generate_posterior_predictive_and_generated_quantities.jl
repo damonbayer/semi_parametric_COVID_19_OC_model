@@ -6,6 +6,7 @@ using DifferentialEquations
 using DiffEqCallbacks
 using LogExpFunctions
 using Turing
+using LinearAlgebra
 using Random
 using JLD2
 using FileIO

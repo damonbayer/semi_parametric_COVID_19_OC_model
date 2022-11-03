@@ -7,6 +7,7 @@ using DifferentialEquations
 using DiffEqCallbacks
 using LogExpFunctions
 using Turing
+using LinearAlgebra
 using Random
 using JLD2
 using FileIO
@@ -36,7 +37,7 @@ include(projectdir("src/prior_constants.jl"))
 Turing.setadbackend(:forwarddiff)
 include(projectdir("src/seirdc_log_ode.jl"))
 
-## Load Data 
+## Load Data
 fixed_ϕ_cases_non_centered = 1.5
 fixed_ϕ_deaths_non_centered = 1.5
 fixed_σ_R0_non_centered = 1.5
