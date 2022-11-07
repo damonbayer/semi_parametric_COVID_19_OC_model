@@ -14,20 +14,19 @@ export popsize
 
 function NegativeBinomial2(μ, ϕ)
   p = 1 / (1 + μ / ϕ)
-  
-  if p <= zero(p)
-    p = eps(zero(p))
-  end
-
-  if p >= one(p)
-    p = prevfloat(one(p))
-  end
-  
   r = ϕ
 
-  if r <= zero(r)
-    r = eps(zero(r))
-  end
+  # if p <= zero(p)
+  #   p = nextfloat(zero(p))
+  # end
+
+  # if p >= one(p)
+  #   p = prevfloat(one(p))
+  # end
+
+  # if r <= zero(r)
+  #   r = nextfloat(zero(r))
+  # end
 
   Distributions.NegativeBinomial(r, p)
 end
@@ -40,14 +39,14 @@ export NegativeBinomial2
 function BetaBinomial2(n, μ, ϕ)
   α = μ * ϕ
   β = (1 - μ) * ϕ
-  
-  if α <= zero(α)
-      α = eps(zero(α))
-  end
-  
-  if β <= zero(β)
-      β = eps(zero(β))
-  end
+
+  # if α <= zero(α)
+  #     α = eps(zero(α))
+  # end
+
+  # if β <= zero(β)
+  #     β = eps(zero(β))
+  # end
 
   Distributions.BetaBinomial(n, α, β)
 end
@@ -65,7 +64,7 @@ export BetaBinomial2
     flattened_varnames_list(model::DynamicPPL.Model) -> Vector{Symbol}
 
 Get a vector of varnames as `Symbol`s with one-to-one correspondence to the
-flattened parameter vector. 
+flattened parameter vector.
 
 ```julia
 julia> @model function demo()
@@ -221,7 +220,7 @@ function optimize_many_MAP(model, n_reps = 100, top_n = 1, verbose = true)
   println(lp_res)
   eligible_indices = findall(.!isnan.(lp_res) .& isfinite.(lp_res))
   best_n_seeds =  eligible_indices[sortperm(lp_res[eligible_indices], rev = true)][1:top_n]
-  
+
   map(best_n_seeds) do seed
     Random.seed!(seed)
     optimize(model, MAP(), LBFGS(linesearch = LineSearches.BackTracking())).values.array
@@ -235,10 +234,10 @@ augment_chains_with_forecast_samples
 function augment_chains_with_forecast_samples(original_chains::Chains, model, model_forecast, augment_type)::Chains
   n_samples = size(original_chains)[1]
   n_chains = size(original_chains)[3]
-  forecast_params_in_order = flattened_varnames_list(model_forecast)  
+  forecast_params_in_order = flattened_varnames_list(model_forecast)
   new_forecast_params = setdiff(forecast_params_in_order, flattened_varnames_list(model))
   n_new_forecast_params = length(new_forecast_params)
-  
+
   if augment_type == "zeros"
     new_forecast_params_chain = setrange(Chains(zeros(n_samples, n_new_forecast_params, n_chains), new_forecast_params), original_chains.value.axes[1].val)
   elseif augment_type == "randn"
@@ -246,8 +245,8 @@ function augment_chains_with_forecast_samples(original_chains::Chains, model, mo
   else
     error("Invalid augment_type")
   end
-  
-  ChainsCustomOrder(hcat(original_chains, new_forecast_params_chain), forecast_params_in_order) 
+
+  ChainsCustomOrder(hcat(original_chains, new_forecast_params_chain), forecast_params_in_order)
 end
 export augment_chains_with_forecast_samples
 
@@ -266,10 +265,10 @@ get_gq_chains
 """
 function get_gq_chains(model, sample_chains)
   gq = generated_quantities(model, sample_chains)
-  
+
   scalar_gq_names = collect(filter(key -> gq[1][key] isa Float64, keys(gq[1])))
   vector_gq_names = collect(filter(key -> gq[1][key] isa Vector{Float64}, keys(gq[1])))
-  
+
   gq_subchains = vcat(
     Chains(permutedims(reinterpret(reshape, Float64, NamedTuple{Tuple(scalar_gq_names)}.(gq)), [2, 1, 3]), scalar_gq_names),
     get_vector_param_chain.([gq], vector_gq_names))
@@ -283,7 +282,7 @@ Utility function if parameters do not change at every obstime.
 function param_changes_to_obstimes(param_values, param_change_times, obstimes)
   length(param_values) == (length(param_change_times) + 1) || error("param_values and param_change_times are not appropriate lengths")
 
-  starting_indices = [findfirst(param_change_times[i] .== obstimes) for i in 1:length(param_change_times)] 
+  starting_indices = [findfirst(param_change_times[i] .== obstimes) for i in 1:length(param_change_times)]
   n_repeat = Int.(vcat(starting_indices, maximum(obstimes)) - vcat(0.0, starting_indices))
   vcat(fill.(param_values, n_repeat)...)
 end

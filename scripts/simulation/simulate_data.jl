@@ -48,6 +48,8 @@ include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird_fixed_phi.jl"))
 
 ## Create Models
+# I don't remember why we needed phixed phi models in the first place.
+# Maybe because the MAP estimates were weird?
 my_model_fixed_phi = bayes_seird_fixed_phi(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
 MAP_init_fixed_phi = optimize_many_MAP(my_model_fixed_phi, 10, 1, true)[1]
 named_MAP_init_fixed_phi = (;zip(flattened_varnames_list(my_model_fixed_phi), MAP_init_fixed_phi)...)
@@ -58,9 +60,9 @@ named_MAP_init_unordered = merge(named_MAP_init_fixed_phi,
 
 include(projectdir("src/bayes_seird.jl"))
 
-my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
-my_model_gq = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, true)
-my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
+my_model = bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
+my_model_gq = bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, true)
+my_model_forecast_missing = bayes_seird(prob, missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 
 true_parameters = [named_MAP_init_unordered[param] for param in flattened_varnames_list(my_model)]
 # Save true parameters as jld2
