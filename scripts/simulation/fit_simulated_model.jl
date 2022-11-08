@@ -48,16 +48,16 @@ include(projectdir("src/load_process_data.jl"))
 include(projectdir("src/bayes_seird.jl"))
 
 ## Create Models
-my_model = bayes_seird(data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
-my_model_forecast_missing = bayes_seird(missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
+my_model = bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, false)
+my_model_forecast_missing = bayes_seird(prob, missing_new_deaths_forecast, missing_new_cases_forecast, tests_forecast, missing_seroprev_cases_forecast, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 data_chain = load(datadir("simulated_data", savename("simulated_data", simulated_dict_seed_1, "jld2")))["data_chain"][seed]
 
 simulated_data_new_deaths = round.(Int, vcat(get(data_chain, :data_new_deaths)[:data_new_deaths]...))
 simulated_data_new_cases = round.(Int, vcat(get(data_chain, :data_new_cases)[:data_new_cases]...))
 simulated_data_seroprev_cases = round.(Int, vcat(get(data_chain, :data_seroprev_cases)[:data_seroprev_cases]...))
 
-my_model_simulated = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, false)
-my_model_simulated_gq = bayes_seird(simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
+my_model_simulated = bayes_seird(prob, simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, false)
+my_model_simulated_gq = bayes_seird(prob, simulated_data_new_deaths, simulated_data_new_cases, tests_forecast, simulated_data_seroprev_cases, seroprev_tests_forecast, obstimes_forecast, seroprev_times_forecast, param_change_times_forecast, use_tests, true, constant_R0, constant_alpha, constant_IFR, true)
 
 alg = Gibbs(NUTS(-1, 0.65, :dur_latent_non_centered, :dur_infectious_non_centered, :ϕ_cases_non_centered, :ϕ_deaths_non_centered, :ρ_death_non_centered, :S_SEI_non_centered, :I_EI_non_centered),
     ESS(:R0_params_non_centered),

@@ -108,7 +108,7 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   abstol = extra_ode_precision ? 1e-11 : 1e-9
   reltol = extra_ode_precision ? 1e-8 : 1e-6
 
-  sol = solve(prob, Tsit5(); callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=log.(u0), p=[β_init, γ, ν, IFR_init])
+  sol = solve(prob, Tsit5(); callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=log.(u0), p=[β_init, γ, ν, IFR_init], tspan=(0.0, obstimes[end]))
 
   # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
   if sol.retcode != :Success
