@@ -263,6 +263,7 @@ end
 """
 get_gq_chains
 """
+# Could be replaced by this: https://gist.github.com/torfjelde/37be5a672d29e473983b8e82b45c2e41
 function get_gq_chains(model, sample_chains)
   gq = generated_quantities(model, sample_chains)
 
