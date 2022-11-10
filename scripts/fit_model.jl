@@ -53,6 +53,7 @@ mkpath(resultsdir("prior_samples"))
 wsave(resultsdir("prior_samples", savename("prior_samples", model_dict, "jld2")), @dict prior_samples)
 
 # Fit Posterior
+# seems like we can now reliably find the MAP in even the most complicated model without trying different seeds.
 MAP_init = optimize_many_MAP(my_model, 10, 1, true)[1]
 alg =
     if use_tests
