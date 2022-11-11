@@ -72,10 +72,10 @@ if init_type ∈ ["lp", "hp"]
     Random.seed!(seed)
     MAP_noise = randn(length(MAP_init[1]))
     Random.seed!(seed)
-    posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thin = 5, init_params = MAP_init[1] * 0.95 + MAP_noise * 0.05)
+    posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thinning = 1, init_params = MAP_init[1] * 0.95 + MAP_noise * 0.05)
 elseif init_type == "rand"
     Random.seed!(seed)
-    posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thin = 5)
+    posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thinning = 1)
 end
 
 mkpath(resultsdir("precision_experiement"))

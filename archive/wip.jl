@@ -40,7 +40,7 @@ include("prior_constants.jl")
 Turing.setadbackend(:forwarddiff)
 include("seirdc_log_ode.jl")
 
-## Load Data 
+## Load Data
 include("load_process_data.jl")
 include("bayes_seird.jl")
 
@@ -58,6 +58,6 @@ alg = Gibbs(NUTS(1000, 0.65, :dur_latent_non_centered, :dur_infectious_non_cente
     ESS(:ρ_cases_t_params_non_centered))
 
 Random.seed!(seed)
-posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thin = 5, init_params = MAP_init[seed] * 0.95)
+posterior_samples = sample(my_model, alg, n_samples, discard_initial = 10_000, thinning = 1, init_params = MAP_init[seed] * 0.95)
 
 wsave(resultsdir("posterior_samples", savename("posterior_samples", savename_dict, "jld2")), @dict posterior_samples)

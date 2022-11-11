@@ -71,6 +71,6 @@ alg =
 Random.seed!(seed)
 MAP_noise = randn(length(MAP_init))
 Random.seed!(seed)
-posterior_samples = sample(my_model, alg, n_samples, discard_initial=10_000, thin=10, init_params=MAP_init * 0.95 + MAP_noise * 0.05)
+posterior_samples = sample(my_model, alg, n_samples, discard_initial=10_000, thinning=1, init_params=MAP_init * 0.95 + MAP_noise * 0.05)
 mkpath(resultsdir("posterior_samples"))
 wsave(resultsdir("posterior_samples", savename("posterior_samples", model_dict, "jld2")), @dict posterior_samples)
