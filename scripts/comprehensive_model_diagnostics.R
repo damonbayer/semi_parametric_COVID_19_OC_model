@@ -5,9 +5,73 @@ library(bayesplot)
 library(tidybayes)
 library(gridExtra)
 
-file_path_gq <- "experiments/fixed_sigma_experiment/results/gq/gq_fixed_sigma_all_tight_init.csv"
-file_path_pp <- "experiments/fixed_sigma_experiment/results/pp/pp_fixed_sigma_all_tight_init.csv"
+fix_gq_names <- function(x) {
+  x %>% 
+    str_replace("₀", "0") %>% 
+    str_replace("ₜ", "t") %>% 
+    str_replace("α", "alpha") %>% 
+    str_replace("β", "beta") %>% 
+    str_replace("ρ", "rho") %>% 
+    str_replace("σ", "sigma") %>% 
+    str_replace("ϕ", "phi")
+}
 
+create_gq_draws_for_plotting <- function(file_path) {
+  read_csv(file_path) |> 
+    rename_with(~str_c(".", .), c(iteration, chain)) |> 
+    as_draws() %>% 
+    rename_with(fix_gq_names)
+}
+
+create_predictive_draws_for_plotting <- function(file_path) {
+  read_csv(file_path) |> 
+    rename_with(~str_c(".", .), c(iteration, chain)) |> 
+    as_draws()
+}
+
+tidy_gq_by_chain <- function(gq_draws_for_plotting) {
+  gq_draws_for_plotting |> 
+    pivot_longer(-starts_with(".")) |> 
+    group_by(name, .chain) |> 
+    median_qi(.width = 0.8) |>
+    separate(col = name,
+             into = c("name", "index"),
+             sep = "\\[|\\]",
+             remove = T,
+             fill = "right",
+             extra = "drop",
+             convert = T) |> 
+    mutate(.chain = factor(.chain)) |> 
+    arrange(.chain, index)
+}
+
+tidy_predictive_by_chain <- function(predictive_draws_for_plotting) {
+  predictive_draws_for_plotting %>% 
+    select(-matches("data_seroprev_cases\\[\\d+\\]")) %>% 
+    pivot_longer(-starts_with(".")) %>% 
+    separate(col = name,
+             into = c("name", "index"),
+             sep = "\\[|\\]",
+             remove = T,
+             fill = "right",
+             extra = "drop",
+             convert = T) %>% 
+    mutate(name = str_remove(name, "data_new_")) %>% 
+    rename(time = index) %>% 
+    pivot_wider(names_from = name, values_from = value) %>% 
+    select(-c(.draw, .iteration)) %>% 
+    left_join(select(dat, time, tests)) %>% 
+    mutate(test_positivity = cases / tests) %>% 
+    select(-cases, -tests) %>% 
+    pivot_longer(cols = c(deaths, test_positivity)) %>% 
+    group_by(.chain, time, name) %>% 
+    median_qi(.width = 0.8) %>% 
+    mutate(.chain = factor(.chain))
+}
+
+file_path_posterior_gq <- "experiments/fixed_sigma_experiment/results/gq/gq_fixed_sigma_all_tight_init.csv"
+file_path_prior_gq <- "experiments/fixed_sigma_experiment/results/gq_prior/gq_prior_fixed_sigma_all_tight_init.csv"
+file_path_posterior_predictive <- "experiments/fixed_sigma_experiment/results/pp/pp_fixed_sigma_all_tight_init.csv"
 
 dat <- 
   read_csv("data/oc_data.csv") %>% 
@@ -20,138 +84,25 @@ dat_tidy <-
   select(-cases, -tests) %>% 
   pivot_longer(-time)
 
-gq_draws_for_plotting <- 
-  read_csv(file_path_gq) |> 
-  rename_with(~str_c(".", .), c(iteration, chain)) |> 
-  as_draws() %>% 
-  rename_with(~ str_replace(., "₀", "0") %>% 
-                str_replace("ₜ", "t") %>% 
-                str_replace("α", "alpha") %>% 
-                str_replace("β", "beta") %>% 
-                str_replace("ρ", "rho") %>% 
-                str_replace("σ", "sigma") %>% 
-                str_replace("ϕ", "phi"))
+gq_posterior_draws_for_plotting <- create_gq_draws_for_plotting(file_path_posterior_gq)
+gq_prior_draws_for_plotting <- create_gq_draws_for_plotting(file_path_prior_gq)
 
-gq_draws_for_plotting_tidy_by_chain <-
-  gq_draws_for_plotting |> 
-  pivot_longer(-starts_with(".")) |> 
-  group_by(name, .chain) |> 
-  median_qi(.width = 0.8) |>
-  separate(col = name,
-           into = c("name", "index"),
-           sep = "\\[|\\]",
-           remove = T,
-           fill = "right",
-           extra = "drop",
-           convert = T) |> 
-  mutate(.chain = factor(.chain)) |> 
-  arrange(.chain, index)
+gq_posterior_tidy_by_chain <- tidy_gq_by_chain(gq_posterior_draws_for_plotting)
+gq_prior_tidy_by_chain <- tidy_gq_by_chain(gq_prior_draws_for_plotting)
 
-pp_draws_for_plotting <- 
-  read_csv(file_path_pp) |> 
-  rename_with(~str_c(".", .), c(iteration, chain)) |> 
-  as_draws()
+posterior_predictive_draws_for_plotting <- create_predictive_draws_for_plotting(file_path_posterior_predictive)
+posterior_predictvie_tidy_by_chain <- tidy_predictive_by_chain(posterior_predictive_draws_for_plotting)
 
 
-pp_draws_for_plotting_tidy_by_chain <- 
-  pp_draws_for_plotting %>% 
-  select(-matches("data_seroprev_cases\\[\\d+\\]")) %>% 
-  pivot_longer(-starts_with(".")) %>% 
-  separate(col = name,
-           into = c("name", "index"),
-           sep = "\\[|\\]",
-           remove = T,
-           fill = "right",
-           extra = "drop",
-           convert = T) %>% 
-  mutate(name = str_remove(name, "data_new_")) %>% 
-  rename(time = index) %>% 
-  pivot_wider(names_from = name, values_from = value) %>% 
-  select(-c(.draw, .iteration)) %>% 
-  left_join(select(dat, time, tests)) %>% 
-  mutate(test_positivity = cases / tests) %>% 
-  select(-cases, -tests) %>% 
-  pivot_longer(cols = c(deaths, test_positivity)) %>% 
-  group_by(.chain, time, name) %>% 
-  median_qi(.width = 0.8) %>% 
-  mutate(.chain = factor(.chain))
-
-
-univariate_trace_plot <- 
-  gq_draws_for_plotting |> 
-  select(-matches("\\[\\d+\\]"), `R0_t[0]`, `IFR_t[0]`, `alpha_t[0]`) |> 
-  thin_draws(5) |>
-  tidy_draws() |> 
-  pivot_longer(-starts_with(".")) |> 
-  mutate(.chain = factor(.chain)) |> 
-  ggplot(aes(.iteration, value, color = .chain)) +
-  facet_grid(name ~ .chain, scales = "free_y") +
-  geom_line() +
-  theme_cowplot() +
-  ggtitle("Univariate Trace Plot")
-
-univariate_eye_plot <- 
-  gq_draws_for_plotting |> 
-  select(-matches("\\[\\d+\\]"), `R0_t[0]`, `IFR_t[0]`, `alpha_t[0]`) |> 
-  tidy_draws() |> 
-  pivot_longer(-starts_with(".")) |> 
-  mutate(.chain = factor(.chain)) |> 
-  ggplot(aes(value, fill = .chain, color = .chain)) +
-  facet_wrap(~ name, scales = "free_x") +
-  stat_halfeye(alpha = 0.5, normalize = "panels") +
-  theme_cowplot() +
-  ggtitle("Univariate Eye Plot")
-
-univariate_pairs_plot <- 
-  gq_draws_for_plotting |> 
-  select(-matches("\\[\\d+\\]"), `R0_t[1]`) |> 
-  mcmc_pairs(off_diag_fun = "hex")
-
-compartments_by_chain_plot <- 
-  gq_draws_for_plotting_tidy_by_chain |> 
-  filter(!is.na(index)) |> 
-  filter(name %in% c("S", "E", "I", "R", "D")) |> 
-  mutate(name = name |> fct_relevel(c("S", "E", "I", "R", "D"))) |> 
-  ggplot(aes(index, value, ymin = .lower, ymax = .upper, fill = .chain)) +
-  facet_wrap(. ~ name, scales = "free_y") +
-  geom_lineribbon(alpha = 0.5) +
-  scale_y_continuous(labels = comma) +
-  ggtitle("Compartments by Chain")
-
-time_varying_parameters_by_chain_plot <- 
-  gq_draws_for_plotting_tidy_by_chain |> 
-  filter(!is.na(index)) |> 
-  filter(str_ends(name, "_t")) |> 
-  ggplot(aes(index, value, ymin = .lower, ymax = .upper, fill = .chain)) +
-  facet_wrap(. ~ name, scales = "free_y") +
-  geom_lineribbon(alpha = 0.5) +
-  scale_y_continuous(labels = comma) +
-  ggtitle("Time-Varying Parameters by Chain")
-
-univariate_acf_plot <-
-  gq_draws_for_plotting |> 
-  select(-matches("\\[\\d+\\]")) %>% 
-  mcmc_acf(x = ., lags = max(.$.iteration) - 2)
-
+# Diagnostic Summaries ----------------------------------------------------
 summarized_results <-
-  gq_draws_for_plotting %>%
+  gq_posterior_draws_for_plotting %>%
   summarize_draws(rhat, ess_basic, .cores = 8)
-
-summarized_results |> 
-  filter(variable == "R0_t[1]")
 
 univariate_ess_rhat <- 
   summarized_results |> 
   filter(str_detect(variable, "\\[\\d+\\]", negate = T)) %>% 
   drop_na()
-
-univariate_ess_rhat_plot <- 
-  univariate_ess_rhat %>% 
-  pivot_longer(-variable, names_to = "value_type") %>% 
-  ggplot(aes(variable, value)) +
-  facet_wrap(~value_type, scales = "free_y", ncol = 1)+
-  geom_col() +
-  ggtitle("Univariate ESS rhat")
 
 multivariate_ess_rhat <- 
   summarized_results %>%
@@ -175,6 +126,89 @@ multivariate_ess_rhat <-
   arrange(name, parameter) %>% 
   ungroup()
 
+# Plots -------------------------------------------------------------------
+univariate_gq_names <-
+  tibble(names = colnames(gq_posterior_draws_for_plotting)) %>% 
+  filter(str_starts(names, "\\.", negate = T)) %>% 
+  filter(str_detect(names, "[^\\_t]\\[\\d+\\]", negate = T)) %>% 
+  filter(str_detect(names, "\\[\\d+\\]", negate = T) | str_detect(names, "\\[0\\]")) %>% 
+  distinct(names) %>% 
+  pull(names)
+
+univariate_gq_tidy_names <- 
+  tibble(names = colnames(gq_posterior_draws_for_plotting)) %>% 
+  filter(str_starts(names, "\\.", negate = T)) %>% 
+  filter(str_detect(names, "[^\\_t]\\[\\d+\\]", negate = T)) %>% 
+  mutate(names = str_remove_all(names, "\\[\\d+\\]")) %>% 
+  distinct(names) %>% 
+  pull(names)
+
+compartment_names <- c("S", "E", "I", "R", "D")
+
+univariate_gq_trace_plot <- 
+  gq_posterior_draws_for_plotting |> 
+  select(starts_with("."), all_of(univariate_gq_names)) |> 
+  thin_draws(5) |>
+  tidy_draws() |> 
+  pivot_longer(-starts_with(".")) |> 
+  mutate(.chain = factor(.chain)) |> 
+  ggplot(aes(.iteration, value, color = .chain)) +
+  facet_grid(name ~ .chain, scales = "free_y") +
+  geom_line() +
+  theme_cowplot() +
+  ggtitle("Univariate GQ Trace Plot")
+
+univariate_interval_plot <- 
+  bind_rows(gq_posterior_tidy_by_chain,
+            gq_prior_tidy_by_chain %>% 
+              mutate(.chain = "prior")) %>% 
+  filter(name %in% univariate_gq_tidy_names) %>% 
+  mutate(name = if_else(str_ends(name, "_t"), str_c(name, "_init"), name)) %>% 
+  ggplot(aes(value, .chain, xmin = .lower, xmax =.upper, color = .chain)) +
+  facet_wrap(~name, scales = "free_x") +
+  geom_interval() +
+  ggtitle("Univariate Eye Plot")
+
+univariate_pairs_plot <- 
+  gq_posterior_draws_for_plotting |> 
+  select(starts_with("."), all_of(univariate_gq_names)) %>% 
+  mcmc_pairs(off_diag_fun = "hex")
+
+compartments_by_chain_plot <- 
+  gq_posterior_tidy_by_chain |> 
+  filter(!is.na(index)) |> 
+  filter(name %in% compartment_names) |> 
+  mutate(name = name |> fct_relevel(compartment_names)) |> 
+  ggplot(aes(index, value, ymin = .lower, ymax = .upper, fill = .chain)) +
+  facet_wrap(. ~ name, scales = "free_y") +
+  geom_lineribbon(alpha = 0.5) +
+  scale_y_continuous(labels = comma) +
+  ggtitle("Compartments by Chain")
+
+time_varying_parameters_by_chain_plot <- 
+  gq_posterior_tidy_by_chain |> 
+  filter(!is.na(index)) |> 
+  filter(str_ends(name, "_t")) |> 
+  ggplot(aes(index, value, ymin = .lower, ymax = .upper, fill = .chain)) +
+  facet_wrap(. ~ name, scales = "free_y") +
+  geom_lineribbon(alpha = 0.5) +
+  scale_y_continuous(labels = comma) +
+  ggtitle("Time-Varying Parameters by Chain")
+
+univariate_acf_plot <-
+  gq_posterior_draws_for_plotting |> 
+  select(starts_with("."), all_of(univariate_gq_names)) %>% 
+  mcmc_acf(x = ., lags = max(.$.iteration) - 2) + 
+  ggtitle("Univariate ACF")
+
+univariate_ess_rhat_plot <- 
+  univariate_ess_rhat %>% 
+  pivot_longer(-variable, names_to = "value_type") %>% 
+  ggplot(aes(variable, value)) +
+  facet_wrap(~value_type, scales = "free_y", ncol = 1)+
+  geom_col() +
+  ggtitle("Univariate ESS rhat")
+
 multivariate_ess_rhat_plot <- 
   multivariate_ess_rhat %>% 
   pivot_longer(-c(parameter, name), names_to = "value_type") %>% 
@@ -183,20 +217,21 @@ multivariate_ess_rhat_plot <-
   geom_point(size = 5) +
   ggtitle("Multivariate ESS rhat")
 
-pp_plot <- 
+posterior_predictive_plot <- 
   ggplot(mapping = aes(time, value)) +
   facet_wrap(. ~ name, scales = "free_y") +
-  geom_lineribbon(data = pp_draws_for_plotting_tidy_by_chain,
+  geom_lineribbon(data = posterior_predictvie_tidy_by_chain,
                   mapping = aes(ymin = .lower, ymax = .upper, fill = .chain), alpha = 0.25, step = "mid") +
   geom_point(data = dat_tidy) +
   scale_y_continuous() +
   ggtitle("Posterior Predictive")
 
-ls()[str_ends(ls(), "_plot")]
 
-ggsave2(filename = path(str_c(path_ext_remove(file_path_gq), "_comprehensive_model_diagnostics"), ext = "pdf"),
+# Save Plots --------------------------------------------------------------
+figure_path <- path(str_c(path_ext_remove(file_path_posterior_gq), "_comprehensive_model_diagnostics"), ext = "pdf")
+ggsave2(filename = figure_path,
         plot = ls()[str_ends(ls(), "_plot")] |> 
           map(get) |>
           marrangeGrob(ncol = 1, nrow = 1),
-        width = 16,
-        height = 9)
+        width = 16*1.5,
+        height = 9*1.5)
