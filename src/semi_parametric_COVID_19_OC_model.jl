@@ -15,19 +15,8 @@ export popsize
 function NegativeBinomial2(μ, ϕ)
   p = 1 / (1 + μ / ϕ)
   r = ϕ
-
-  # if p <= zero(p)
-  #   p = nextfloat(zero(p))
-  # end
-
-  # if p >= one(p)
-  #   p = prevfloat(one(p))
-  # end
-
-  # if r <= zero(r)
-  #   r = nextfloat(zero(r))
-  # end
-
+  r = clamp(r, nextfloat(zero(r)), prevfloat(typemax(r)))
+  p = clamp(p, nextfloat(zero(p)), one(p))
   Distributions.NegativeBinomial(r, p)
 end
 export NegativeBinomial2
@@ -39,15 +28,8 @@ export NegativeBinomial2
 function BetaBinomial2(n, μ, ϕ)
   α = μ * ϕ
   β = (1 - μ) * ϕ
-
-  # if α <= zero(α)
-  #     α = eps(zero(α))
-  # end
-
-  # if β <= zero(β)
-  #     β = eps(zero(β))
-  # end
-
+  α = clamp(α, nextfloat(zero(α)), prevfloat(typemax(α)))
+  β = clamp(β, nextfloat(zero(β)), prevfloat(typemax(β)))
   Distributions.BetaBinomial(n, α, β)
 end
 export BetaBinomial2
@@ -223,7 +205,7 @@ function optimize_many_MAP(model, n_reps = 100, top_n = 1, verbose = true)
 
   map(best_n_seeds) do seed
     Random.seed!(seed)
-    optimize(model, MAP(), LBFGS(linesearch = LineSearches.BackTracking())).values.array
+    optimize(model, MAP(), LBFGS(linesearch = LineSearches.BackTracking()))
   end
 end
 export optimize_many_MAP
