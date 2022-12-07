@@ -5,6 +5,36 @@ library(bayesplot)
 library(tidybayes)
 library(gridExtra)
 
+file_path_posterior_gq <- "experiments/fixed_sigma_experiment/results/posterior_generated_quantities/posterior_generated_quantities_fixed_sigma_all_tight_init.csv"
+file_path_prior_gq <- "experiments/fixed_sigma_experiment/results/prior_generated_quantities/prior_generated_quantities_fixed_sigma_all_tight_init.csv"
+file_path_posterior_predictive <- "experiments/fixed_sigma_experiment/results/posterior_predictive/posterior_predictive_fixed_sigma_all_tight_init.csv"
+figure_path <- path("experiments/fixed_sigma_experiment/results/comprehensive_model_diagnostics_fixed_sigma_all_tight_init", ext = "pdf")
+
+dat <- 
+  read_csv("data/oc_data.csv") %>% 
+  filter(time <= 42) %>% 
+  select(time, cases, deaths, tests) %>% 
+  mutate(test_positivity = cases / tests)
+
+# for simulated data
+# dat <- 
+#   read_csv("experiments/fixed_sigma_experiment/simulated_data.csv") %>% 
+#   select(-iteration, -chain) %>% 
+#   pivot_longer(everything()) %>% 
+#   separate(col = name,
+#            into = c("name", "index"),
+#            sep = "\\[|\\]",
+#            remove = T,
+#            fill = "right",
+#            extra = "drop",
+#            convert = T) %>% 
+#   mutate(name = str_remove(name, "data_new_")) %>% 
+#   rename(time = index) %>% 
+#   pivot_wider(names_from = name, values_from = value) %>% 
+#   select(-data_seroprev_cases) %>% 
+#   left_join(read_csv("data/oc_data.csv") %>% select(time, tests)) %>% 
+#   mutate(test_positivity = cases / tests)
+
 fix_gq_names <- function(x) {
   x %>% 
     str_replace("₀", "0") %>% 
@@ -68,16 +98,6 @@ tidy_predictive_by_chain <- function(predictive_draws_for_plotting) {
     median_qi(.width = 0.8) %>% 
     mutate(.chain = factor(.chain))
 }
-
-file_path_posterior_gq <- "experiments/fixed_sigma_experiment/results/gq/gq_fixed_sigma_all_tight_init.csv"
-file_path_prior_gq <- "experiments/fixed_sigma_experiment/results/gq_prior/gq_prior_fixed_sigma_all_tight_init.csv"
-file_path_posterior_predictive <- "experiments/fixed_sigma_experiment/results/pp/pp_fixed_sigma_all_tight_init.csv"
-
-dat <- 
-  read_csv("data/oc_data.csv") %>% 
-  filter(time <= 42) %>% 
-  select(time, cases, deaths, tests) %>% 
-  mutate(test_positivity = cases / tests)
 
 dat_tidy <- 
   dat %>% 
@@ -228,7 +248,6 @@ posterior_predictive_plot <-
 
 
 # Save Plots --------------------------------------------------------------
-figure_path <- path(str_c(path_ext_remove(file_path_posterior_gq), "_comprehensive_model_diagnostics"), ext = "pdf")
 ggsave2(filename = figure_path,
         plot = ls()[str_ends(ls(), "_plot")] |> 
           map(get) |>
