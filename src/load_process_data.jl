@@ -4,7 +4,7 @@ end
 
 if !@isdefined(max_t_forecast)
     @warn("max_t_forecast is not defined. Assigning max_t_forecast = max_t")
-    max_t_forecast = max_t 
+    max_t_forecast = max_t
 end
 
 full_dat = CSV.read("data/oc_data.csv", DataFrame)[:, [:time, :cases, :tests, :deaths]]
@@ -33,12 +33,12 @@ seroprev_tests_forecast = seroprev_dat[1:max_index_seroprev_forecast, :seroprev_
 
 data_new_deaths = full_dat[1:max_index, :deaths]
 data_new_deaths_forecast = full_dat[1:max_index_forecast, :deaths]
-missing_new_deaths_forecast = repeat([missing], max_index_forecast)
+missing_new_deaths_forecast = Array{Union{Missing, Int64}}(missing, max_index_forecast)
 
 data_new_cases = full_dat[1:max_index, :cases]
 data_new_cases_forecast = full_dat[1:max_index_forecast, :cases]
-missing_new_cases_forecast = repeat([missing], max_index_forecast)
+missing_new_cases_forecast = Array{Union{Missing, Int64}}(missing, max_index_forecast)
 
 data_seroprev_cases = seroprev_dat[1:max_index_seroprev, :seroprev_cases]
 data_seroprev_cases_forecast = seroprev_dat[1:max_index_seroprev_forecast, :seroprev_cases]
-missing_seroprev_cases_forecast = repeat([missing], max_index_seroprev_forecast)
+missing_seroprev_cases_forecast = Array{Union{Missing, Int64}}(missing, max_index_seroprev_forecast)

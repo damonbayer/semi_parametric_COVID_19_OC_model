@@ -118,118 +118,115 @@ data.data_new_deaths = vcat(missing, data_new_deaths)
 CSV.write(projectdir("illustrative_examples", "age_structure", "data", "data.csv"), data)
 
 function seirdc_log_ode!(du, u, p, t)
-    (S, E, I, R, D, C) = exp.(u)
-    (β, γ, ν, IFR) = p
-    N = S + E + I + R + D
+  S, E, I, R, D, C = exp.(u)
+  β, γ, ν, IFR = p
+  N = S + E + I + R + D
 
-    infection = β * I * S / N
-    progression = γ * E
-    recovery = ν * (1 - IFR) * I
-    death = ν * IFR * I
+  infection = β * I * S / N
+  progression = γ * E
+  recovery = ν * (1 - IFR) * I
+  death = ν * IFR * I
 
-    @inbounds begin
-        du[1] = -infection / S # S
-        du[2] = (infection - progression) / E # E
-        du[3] = (progression - (recovery + death)) / I # I
-        du[4] = recovery / R # R
-        du[5] = death / D # D
-        du[6] = progression / C # Cumulative Progressions
-    end
-    nothing
+  @inbounds begin
+      du[1] = -infection / S # S
+      du[2] = (infection - progression) / E # E
+      du[3] = (progression - (recovery + death)) / I # I
+      du[4] = recovery / R # R
+      du[5] = death / D # D
+      du[6] = progression / C # Cumulative Progressions
+  end
+  nothing
 end
+
 
 # Can you infer it?
 obstimes = collect(1:max_t)
 param_change_times = obstimes[1:(end - 1)]
 
-prob_skeleton = ODEProblem(seirdc_log_ode!,
-  zeros(6),
-  (0.0, obstimes[end]),
-  ones(4))
+prob = ODEProblem{true}(seirdc_log_ode!,
+    zeros(6),
+    (0.0, obstimes[end]),
+    ones(4))
 
-@model function bayes_seird(data_new_deaths, data_new_cases, obstimes, param_change_times, extra_ode_precision)
-    # Calculate number of observed datapoints timepoints
-    l_incidence = length(data_new_deaths)
-    l_param_change_times = length(param_change_times)
+    @model function bayes_seird(prob, data_new_deaths, data_new_cases, obstimes, param_change_times, extra_ode_precision)
+      # Calculate number of observed datapoints timepoints
+      l_incidence = length(data_new_deaths)
+      l_param_change_times = length(param_change_times)
 
-    # Priors
-    R₀_init_non_centered ~ Normal()
-    IFR_t_params_non_centered ~ MvNormal(l_param_change_times + 2, 1.0 * I) # +2, 1 for var, 1 for init
-    dur_latent_non_centered ~ Normal()
-    dur_infectious_non_centered ~ Normal()
+      # Priors
+      R₀_init_non_centered ~ Normal()
+      IFR_t_params_non_centered ~ MvNormal(Zeros(l_param_change_times + 2), I) # +2, 1 for var, 1 for init
+      dur_latent_non_centered ~ Normal()
+      dur_infectious_non_centered ~ Normal()
 
-    # Transformations
-    γ = exp(-(dur_latent_non_centered * 0.1 + 0.0))
-    ν = exp(-(dur_infectious_non_centered * 0.1 + log(2)))
+      # Transformations
+      γ = exp(-(dur_latent_non_centered * 0.1 + 0.0))
+      ν = exp(-(dur_infectious_non_centered * 0.1 + log(2)))
 
 
-    σ_IFR_non_centered = IFR_t_params_non_centered[2]
-    σ_IFR = exp(σ_IFR_non_centered * 0.13 + -2.5)
-    logit_IFR_t_steps_non_centered = IFR_t_params_non_centered[3:end]
+      σ_IFR_non_centered = IFR_t_params_non_centered[2]
+      σ_IFR = exp(σ_IFR_non_centered * 0.13 + -2.5)
+      logit_IFR_t_steps_non_centered = IFR_t_params_non_centered[3:end]
 
-    R₀_init = exp(R₀_init_non_centered * 0.5 + log(2))
+      R₀_init = exp(R₀_init_non_centered * 0.5 + log(2))
 
-    IFR_init_non_centered = IFR_t_params_non_centered[1]
-    IFR_init = logistic(IFR_init_non_centered * 0.4 + logistic(-4))
+      IFR_init_non_centered = IFR_t_params_non_centered[1]
+      IFR_init = logistic(IFR_init_non_centered * 0.4 + logistic(-4))
 
-    β_init = R₀_init * ν
+      β_init = R₀_init * ν
 
-    u0 = [S_init, E_init, I_init, 1.0, 1.0, I_init] # Intialize with 1 in R and D so there are no problems when we log for ODE
-    IFR_t_values_no_init = logistic.(logit(IFR_init) .+ cumsum(vec(logit_IFR_t_steps_non_centered) * σ_IFR))
+      u0 = [990.0, 5.0, 5.0, 1.0, 1.0, 5.0] # Intialize with 1 in R and D so there are no problems when we log for ODE
+      IFR_t_values_no_init = logistic.(logit(IFR_init) .+ cumsum(logit_IFR_t_steps_non_centered) * σ_IFR)
 
-    function param_affect_β_IFR!(integrator)
-      ind_t = searchsortedfirst(param_change_times, integrator.t) # Find the index of param_change_times that contains the current timestep
-      integrator.p[4] = IFR_t_values_no_init[ind_t] # Replace IFR with a new value from IFR_t_values
-    end
+      function param_affect_β_IFR!(integrator)
+          ind_t = searchsortedfirst(param_change_times, integrator.t) # Find the index of param_change_times that contains the current timestep
+          integrator.p[4] = IFR_t_values_no_init[ind_t] # Replace IFR with a new value from IFR_t_values
+      end
 
-    param_callback = PresetTimeCallback(param_change_times, param_affect_β_IFR!, save_positions = (false, false))
+      param_callback = PresetTimeCallback(param_change_times, param_affect_β_IFR!, save_positions=(false, false))
 
-    prob = remake(prob_skeleton,
-      u0 = log.(u0),
-      p = [β_init, γ, ν, IFR_init])
+      if extra_ode_precision
+          sol = solve(prob, Tsit5(); callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=1e-11, reltol=1e-8, u0=log.(u0), p=[β_init, γ, ν, IFR_init])
+      else
+          sol = solve(prob, Tsit5(); callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=1e-9, reltol=1e-6, u0=log.(u0), p=[β_init, γ, ν, IFR_init])
+      end
 
-    if extra_ode_precision
-      sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-11, reltol = 1e-8)
-    else
-      sol = solve(prob, Tsit5(), callback = param_callback, saveat = obstimes, save_start = true, verbose = false, abstol = 1e-9, reltol = 1e-6)
-    end
+      # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
+      if sol.retcode != :Success
+          Turing.@addlogprob! -Inf
+          return
+      end
 
-    # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
-    if sol.retcode != :Success
-      Turing.@addlogprob! -Inf
-      return
-    end
+      sol_reg_scale_array = exp.(Array(sol))
 
-    sol_reg_scale_array = exp.(Array(sol))
+      sol_new_deaths = sol_reg_scale_array[5, 2:end] - sol_reg_scale_array[5, 1:(end-1)]
+      sol_new_cases = sol_reg_scale_array[6, 2:end] - sol_reg_scale_array[6, 1:(end-1)]
 
-    sol_new_deaths = sol_reg_scale_array[5, 2:end] - sol_reg_scale_array[5, 1:(end-1)]
-    sol_new_cases = sol_reg_scale_array[6, 2:end] - sol_reg_scale_array[6, 1:(end-1)]
+      deaths_mean = sol_new_deaths
+      cases_mean = sol_new_cases
 
-    deaths_mean = sol_new_deaths
-    cases_mean = sol_new_cases
+      for i in 1:l_incidence
+          data_new_deaths[i] ~ Poisson(max(deaths_mean[i], 0.0)) # In exploratory phase of MCMC, sometimes you get weird numerical errors
+          data_new_cases[i] ~ Poisson(max(cases_mean[i], 0.0))
+      end
 
-    for i in 1:l_incidence
-      data_new_deaths[i] ~ Poisson(max(deaths_mean[i], 0.0)) # In exploratory phase of MCMC, sometimes you get weird numerical errors
-      data_new_cases[i] ~ Poisson(max(cases_mean[i], 0.0))
-    end
-
-    # Generated quantities
-    gq = (
-      S = sol_reg_scale_array[1, :],
-      E = sol_reg_scale_array[2, :],
-      I = sol_reg_scale_array[3, :],
-      R = sol_reg_scale_array[4, :],
-      D = sol_reg_scale_array[5, :],
-      dur_latent_days = 7 / γ,
-      dur_infectious_days = 7/ ν,
-      deaths_mean = deaths_mean,
-      cases_mean = cases_mean,
-      β = β_init,
-      R₀ = β_init / ν,
-      Rₜ_t = β_init / ν * sol_reg_scale_array[1, :][1:(end-1)] / popsize,
-      IFR_t = vcat(IFR_init, IFR_t_values_no_init),
-      σ_IFR = σ_IFR)
-    return gq
+      # # Generated quantities
+      gq = (
+        S = sol_reg_scale_array[1, :],
+        E = sol_reg_scale_array[2, :],
+        I = sol_reg_scale_array[3, :],
+        R = sol_reg_scale_array[4, :],
+        D = sol_reg_scale_array[5, :],
+        dur_latent_days = 7 / γ,
+        dur_infectious_days = 7/ ν,
+        deaths_mean = deaths_mean,
+        cases_mean = cases_mean,
+        β = β_init,
+        R₀ = β_init / ν,
+        Rₜ_t = β_init / ν * sol_reg_scale_array[1, :][1:(end-1)] / popsize,
+        IFR_t = vcat(IFR_init, IFR_t_values_no_init),
+        σ_IFR = σ_IFR)
+      return gq
   end
 
 my_model = bayes_seird(data_new_deaths, data_new_cases, obstimes, param_change_times, false)
