@@ -1,10 +1,9 @@
 prob = ODEProblem{true}(seirdc_log_ode!,
-    zeros(6),
-    (0.0, obstimes[end]),
-    ones(4))
+  zeros(6),
+  (0.0, obstimes[end]),
+  ones(4))
 
-@model function bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests, use_seroprev, constant_R0, constant_alpha, constant_IFR, extra_ode_precision)
-  # Calculate number of observed datapoints timepoints
+@model function bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests::Bool, use_seroprev::Bool, constant_R0::Bool, constant_alpha::Bool, constant_IFR::Bool, DEAlgorithm::DEAlgorithm, abstol, reltol)
   l_incidence = length(data_new_deaths)
 
   if use_seroprev
@@ -56,7 +55,7 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   R₀_init_non_centered = R0_params_non_centered[1]
   R₀_init = exp(R₀_init_non_centered * R₀_init_non_centered_sd + R₀_init_non_centered_mean)
   β_init = R₀_init * ν
-  β_t_values_no_init = constant_R0 ? repeat([β_init], l_param_change_times_R0) : exp.(log(R₀_init) .+ cumsum(log_R0_steps_non_centered) * σ_R0) * ν
+  β_t_values_no_init = constant_R0 ? repeat([β_init], l_param_change_times) : exp.(log(R₀_init) .+ cumsum(log_R0_steps_non_centered) * σ_R0) * ν
 
   if !constant_IFR
     σ_IFR_non_centered = IFR_t_params_non_centered[2]
@@ -66,7 +65,7 @@ prob = ODEProblem{true}(seirdc_log_ode!,
 
   IFR_init_non_centered = IFR_t_params_non_centered[1]
   IFR_init = logistic(IFR_init_non_centered * IFR_init_non_centered_sd + IFR_init_non_centered_mean)
-  IFR_t_values_no_init = constant_IFR ? repeat([IFR_init], l_param_change_times_IFR) : logistic.(logit(IFR_init) .+ cumsum(logit_IFR_t_steps_non_centered) * σ_IFR)
+  IFR_t_values_no_init = constant_IFR ? repeat([IFR_init], l_param_change_times) : logistic.(logit(IFR_init) .+ cumsum(logit_IFR_t_steps_non_centered) * σ_IFR)
 
   if !constant_alpha
     if use_tests
@@ -105,10 +104,7 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   end
   param_callback = PresetTimeCallback(param_change_times, param_affect_β_IFR!, save_positions=(false, false))
 
-  abstol = extra_ode_precision ? 1e-11 : 1e-9
-  reltol = extra_ode_precision ? 1e-8 : 1e-6
-
-  sol = solve(prob, Tsit5(); callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=log.(u0), p=[β_init, γ, ν, IFR_init], tspan=(0.0, obstimes[end]))
+  sol = solve(prob, DEAlgorithm; callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=log.(u0), p=[β_init, γ, ν, IFR_init], tspan=(0.0, obstimes[end]))
 
   # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
   if sol.retcode != :Success
@@ -121,12 +117,12 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   sol_new_deaths = sol_reg_scale_array[5, 2:end] - sol_reg_scale_array[5, 1:(end-1)]
   sol_new_cases = sol_reg_scale_array[6, 2:end] - sol_reg_scale_array[6, 1:(end-1)]
 
-  deaths_mean = ρ_death * sol_new_deaths
+  deaths_mean = max.(ρ_death * sol_new_deaths, 0.0)
 
   if use_tests
-    cases_bb_mean = logistic.(α_t_values_with_init .+ logit.(sol_new_cases / popsize))
+    cases_bb_mean = max.(logistic.(α_t_values_with_init .+ logit.(sol_new_cases / popsize)), 0.0)
   else
-    cases_nb_mean = ρ_cases_t_values_with_init .* sol_new_cases
+    cases_nb_mean = max.(ρ_cases_t_values_with_init .* sol_new_cases, 0.0)
   end
 
   if use_seroprev
@@ -135,11 +131,11 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   end
 
   for i in 1:l_incidence
-    data_new_deaths[i] ~ NegativeBinomial2(max(deaths_mean[i], 0.0), ϕ_deaths) # In exploratory phase of MCMC, sometimes you get weird numerical errors
+    data_new_deaths[i] ~ NegativeBinomial2(deaths_mean[i], ϕ_deaths) # In exploratory phase of MCMC, sometimes you get weird numerical errors
     if use_tests
-      data_new_cases[i] ~ BetaBinomial2(tests[i], max(cases_bb_mean[i], 0.0), ϕ_cases_bb)
+      data_new_cases[i] ~ BetaBinomial2(tests[i], cases_bb_mean[i], ϕ_cases_bb)
     else
-      data_new_cases[i] ~ NegativeBinomial2(max(cases_nb_mean[i], 0.0), ϕ_cases_nb)
+      data_new_cases[i] ~ NegativeBinomial2(cases_nb_mean[i], ϕ_cases_nb)
     end
   end
 
