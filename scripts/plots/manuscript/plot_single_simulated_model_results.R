@@ -3,11 +3,14 @@ library(tidybayes)
 library(fs)
 source("src/plot_functions.R")
 
+target_sim_id <- 1
+
 real_dat <- read_csv("data/oc_data.csv") %>% 
   filter(time <= 42)
 
-simulated_dat <- read_csv("data/simulated_data/simulated_data_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  slice(1) %>% 
+simulated_dat <- 
+  read_csv("data/simulation/oc_like/simulated_data.csv") %>% 
+  slice(target_sim_id) %>% 
   select(-c(iteration, chain, starts_with("data_seroprev_cases"))) %>% 
   pivot_longer(everything()) %>% 
   mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
@@ -48,129 +51,95 @@ simulated_binned_data_plot <-
 
 line_size <- 2
 
-true_parameters <-
-  read_csv("data/simulated_data/true_parameters_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
+true_generated_quantities <-
+  read_csv("data/simulation/oc_like/true_generated_quantities.csv") %>% 
   select(-iteration, -chain) %>% 
   pivot_longer(everything(), values_to = "true_value") %>% 
   mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name))
+  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name)) %>% 
+  mutate(time = time - 1)
 
-true_gq <-
-  read_csv("data/simulated_data/true_generated_quantities_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  select(-iteration, -chain) %>% 
-  pivot_longer(everything(), values_to = "true_value") %>% 
-  mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name))
+tidy_prior_generated_quantities <- read_csv("results/simulation/oc_like/tidy_prior_generated_quantities/tidy_prior_generated_quantities.csv")
 
-prior_parameters_summary <- 
-  read_csv("results/simulated_posterior_samples_summary/simulated_prior_samples_summary_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  rename(name = parameters,
-         .lower = `10.0%`,
-         .upper = `90.0%`)
+tidy_posterior_generated_quantities <- 
+  tibble(file_path = dir_ls("results/simulation/oc_like/tidy_posterior_generated_quantities")) %>% 
+  mutate(sim_id = file_path %>% str_extract("(?<=sim_id=)\\d+") %>% as.integer()) %>% 
+  filter(sim_id == target_sim_id) %>% 
+  pull(file_path) %>% 
+  read_csv()
 
-prior_gq_summary <- 
-  read_csv("results/simulated_generated_quantities_summary/simulated_prior_generated_quantities_summary_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  rename(name = parameters,
-         .lower = `10.0%`,
-         .upper = `90.0%`)
-
-single_sim_parameters_summary <- read_csv("results/simulated_posterior_samples_summary/simulated_posterior_samples_summary_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  rename(name = parameters,
-         .lower = `10.0%`,
-         .upper = `90.0%`) %>% 
-  mutate(.width = 0.8)
-
-single_sim_gq_summary <- read_csv("results/simulated_generated_quantities_summary/simulated_generated_quantities_summary_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  rename(name = parameters,
-         .lower = `10.0%`,
-         .upper = `90.0%`) %>% 
-  mutate(.width = 0.8)
-
-all_parameter_intervals <- 
+all_tidy_generated_quantities <- 
   bind_rows(
-    mutate(prior_parameters_summary, dist = "Prior"),
-    mutate(single_sim_parameters_summary, dist = "Posterior")) %>% 
-  mutate(.width = 0.8) %>%
-  mutate(dist = fct_inorder(dist)) %>% 
-  select(name, mean, .lower, .upper, dist) %>% 
-  mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name))
+    mutate(tidy_prior_generated_quantities, distribution = "prior"),
+    mutate(tidy_posterior_generated_quantities, distribution = "posterior"))
 
-all_gq_intervals <- 
-  bind_rows(
-    mutate(prior_gq_summary, dist = "Prior"),
-    mutate(single_sim_gq_summary, dist = "Posterior")) %>% 
-  mutate(.width = 0.8) %>% 
-  mutate(dist = fct_inorder(dist)) %>% 
-  select(name, mean, .lower, .upper, dist) %>% 
-  mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name))
 
-single_gq_simulation_scalar_plot <- 
+single_generated_quantities_simulation_scalar_plot <-
   ggplot() +
-  geom_pointinterval(data = all_gq_intervals %>%
+  geom_pointinterval(data = all_tidy_generated_quantities %>%
                        filter(is.na(time)) %>% 
                        filter(!(name %in%  c("S_SEI", "I_EI"))),
-                     mapping = aes(y = dist, x = mean, xmin = .lower, xmax = .upper, color = dist),
-                     size = line_size) +
-  geom_vline(data = true_gq %>%
+                     mapping = aes(y = distribution, x = value, xmin = .lower, xmax = .upper, color = distribution)) +
+  geom_vline(data = true_generated_quantities %>%
                filter(is.na(time)) %>% 
                filter(!(name %in%  c("S_SEI", "I_EI"))),
              mapping = aes(xintercept = true_value),
              size = line_size) +
-  facet_wrap(. ~ name, scales = "free_x",
+  facet_wrap(~name, scales = "free_x",
              labeller = my_labeller_fn) +
   scale_x_continuous(name = "Value") +
-  scale_y_discrete(name = "Distribution") +
+  scale_y_discrete(name = "Distribution", labels = str_to_title) +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
   ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters",
-          subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
+          subtitle = "One simulated dataset, 50%, 80%, 95% credible intervals, true values in black") +
   theme(legend.position = "none")
 
 
-single_gq_simulation_compartment_plot <- 
+single_generated_quantities_simulation_compartment_plot <-
   ggplot() +
-  geom_lineribbon(data = all_gq_intervals %>%
+  geom_lineribbon(data = all_tidy_generated_quantities %>%
+                    filter(.width == 0.8) %>% 
                     filter(!is.na(time)) %>% 
                     filter(name %in% c("S", "E", "I", "R", "D")) %>% 
                     mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
-                  mapping = aes(x= time, y = mean, ymin = .lower, ymax = .upper, fill = dist, color = dist),
+                  mapping = aes(x= time, y = value, ymin = .lower, ymax = .upper, fill = distribution, color = distribution, group = .width),
                   alpha = 0.5,
                   key_glyph = "rect") +
-  geom_point(data = true_gq %>%
-               filter(!is.na(time)) %>% 
-               filter(name %in% c("S", "E", "I", "R", "D")) %>% 
+  geom_point(data = true_generated_quantities %>%
+               filter(!is.na(time)) %>%
+               filter(name %in% c("S", "E", "I", "R", "D")) %>%
                mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
              mapping = aes(x = time, y = true_value)) +
-  geom_line(data = true_gq %>%
-              filter(!is.na(time)) %>% 
-              filter(name %in% c("S", "E", "I", "R", "D")) %>% 
+  geom_line(data = true_generated_quantities %>%
+              filter(!is.na(time)) %>%
+              filter(name %in% c("S", "E", "I", "R", "D")) %>%
               mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
             mapping = aes(x = time, y = true_value)) +
   facet_wrap(. ~ name, scales = "free_y",
              labeller = my_labeller_fn) +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_continuous(name = "Time") +
-  scale_fill_discrete(name = "Distribution") +
-  scale_color_discrete(name = "Distribution") +
+  scale_fill_discrete(name = "Distribution", labels = str_to_title) +
+  scale_color_discrete(name = "Distribution", labels = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Compartments",
           subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
   theme(legend.position = c(5/6, 1/4))
 
-single_gq_simulation_time_varying_plot <- 
+single_generated_quantities_simulation_time_varying_plot <-
   ggplot() +
-  geom_lineribbon(data = all_gq_intervals %>%
+  geom_lineribbon(data = all_tidy_generated_quantities %>%
+                    filter(.width == 0.8) %>% 
                     filter(!is.na(time)) %>% 
                     filter(str_ends(name, "_t")),
-                  mapping = aes(x= time, y = mean, ymin = .lower, ymax = .upper, fill = dist, color = dist),
+                  mapping = aes(x = time, y = value, ymin = .lower, ymax = .upper, fill = distribution, color = distribution),
                   alpha = 0.5,
                   key_glyph = "rect") +
-  geom_point(data = true_gq %>%
+  geom_point(data = true_generated_quantities %>%
                filter(!is.na(time)) %>% 
                filter(str_ends(name, "_t")),
              mapping = aes(x = time, y = true_value)) +
-  geom_line(data = true_gq %>%
+  geom_line(data = true_generated_quantities %>%
               filter(!is.na(time)) %>% 
               filter(str_ends(name, "_t")),
             mapping = aes(x = time, y = true_value)) +
@@ -178,8 +147,8 @@ single_gq_simulation_time_varying_plot <-
              labeller = my_labeller_fn) +
   scale_y_continuous(name = "Value", labels = comma) +
   scale_x_continuous(name = "Time") +
-  scale_fill_discrete(name = "Distribution") +
-  scale_color_discrete(name = "Distribution") +
+  scale_fill_discrete(name = "Distribution", labels = str_to_title) +
+  scale_color_discrete(name = "Distribution", labels = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Time-Varying Parameters",
           subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
   theme(legend.position = c(5/6, 1/4))
@@ -188,14 +157,15 @@ single_gq_simulation_time_varying_plot <-
 save_plot(filename = path(figures_dir, "simulated_binned_data_plot", ext = "pdf"),
           plot = simulated_binned_data_plot, ncol = 2, nrow = 2)
 
-save_plot(filename = path(figures_dir, "single_gq_simulation_compartment_plot", ext = "pdf"),
-          plot = single_gq_simulation_compartment_plot,
+
+save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_compartment_plot", ext = "pdf"),
+          plot = single_generated_quantities_simulation_compartment_plot,
           ncol = 3, nrow = 2)
 
-save_plot(filename = path(figures_dir, "single_gq_simulation_scalar_plot", ext = "pdf"),
-          plot = single_gq_simulation_scalar_plot,
+save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_scalar_plot", ext = "pdf"),
+          plot = single_generated_quantities_simulation_scalar_plot,
           ncol = 3, nrow = 3)
 
-save_plot(filename = path(figures_dir, "single_gq_simulation_time_varying_plot", ext = "pdf"),
-          plot = single_gq_simulation_time_varying_plot,
+save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_time_varying_plot", ext = "pdf"),
+          plot = single_generated_quantities_simulation_time_varying_plot,
           ncol = 3, nrow = 2)

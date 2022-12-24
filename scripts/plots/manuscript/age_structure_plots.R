@@ -20,7 +20,8 @@ latent_curves <-
       Vulnerable = "o",
       Combined = "total"
     )) %>%
-  mutate(type = "latent")
+  mutate(type = "latent") %>% 
+  drop_na()
 
 true_ifr_dat <-
   latent_curves %>%
@@ -31,14 +32,16 @@ true_ifr_dat <-
   pivot_wider(names_from = population, values_from = value) %>%
   group_by(t) %>%
   summarize(value = (General * 0.01 + Vulnerable * 0.1) / (General + Vulnerable)) %>%
-  rename(index = t)
+  rename(time = t) %>% 
+  drop_na()
 
 dat <-
   read_csv("illustrative_examples/age_structure/data/data.csv") %>%
   select(t, starts_with("data")) %>%
   pivot_longer(-t) %>%
   mutate(name = str_remove(name, "data_")) %>%
-  mutate(type = "observed")
+  mutate(type = "observed") %>% 
+  drop_na()
 
 latent_curves %>%
   unite(col = grp, name, population, remove = FALSE) %>%
@@ -66,41 +69,36 @@ data_ifr_age_structure_plot <-
 
 generated_quantities <-
   read_csv("illustrative_examples/age_structure/data/generated_quantities.csv") %>%
-  mutate(draw = tidybayes:::draw_from_chain_and_iteration_(chain = chain, iteration = iteration), .after = iteration) %>%
-  pivot_longer(-c(iteration, chain, draw), names_to = "name_raw") %>%
-  separate(
-    col = name_raw,
-    into = c("name", "index"),
-    sep = "\\[|\\]",
-    remove = TRUE,
-    fill = "right",
-    extra = "drop",
-    convert = TRUE
-  ) %>%
-  select(chain, iteration, everything()) %>%
-  rename_with(~ str_c(".", .), c(iteration, chain, draw)) %>%
-  select(-starts_with(".")) %>%
-  group_by(name, index) %>%
+  pivot_longer(-c(iteration, chain), names_to = "name_raw") %>% 
+  mutate(name = 
+           if_else(
+             str_detect(name_raw, "\\[\\d+\\]"), 
+             str_extract(name_raw, ".+(?=\\[)"),
+             name_raw),
+         time = name_raw %>% 
+           str_extract("(?<=\\[)\\d+(?=\\])") %>% 
+           as.integer()) %>% 
+  select(name, time, value) %>% 
+  group_by(name, time) %>% 
   median_qi(.width = c(0.5, 0.8, 0.95))
 
 posterior_ifr_age_structure_plot <-
   generated_quantities %>%
   filter(name == "IFR_t") %>%
-  ggplot(aes(index, value)) +
+  ggplot(aes(time, value)) +
   geom_lineribbon(
     mapping = aes(ymin = .lower, ymax = .upper),
     color = brewer_line_color, step = "hv", key_glyph = "rect"
   ) +
   geom_step(data = true_ifr_dat %>%
-    filter(index <= generated_quantities %>%
+    filter(time <= generated_quantities %>%
       filter(name == "IFR_t") %>%
-      pull(index) %>%
-      max()), size = 1.5, linetype = "dotted") +
+      pull(time) %>%
+      max()),
+    size = 1.5,
+    linetype = "dotted") +
   scale_x_continuous("Time") +
   scale_y_continuous("IFR", labels = percent) +
-  # annotate("text", x = 2, y = 0.1, label = "True IFR for Vulnerable Population", vjust = 1.5, hjust = 0) +
-  # annotate("text", x = 0, y = 0.01, label = "True IFR for General Population", vjust = -0.5, hjust = 0) +
-  # geom_hline(yintercept = c(0.01, 0.1), linetype = "dashed") +
   ggtitle(
     "Posterior Infection Fatality Ratio for Heterogeneous Population",
     "Modelled as Homogeneous Population"

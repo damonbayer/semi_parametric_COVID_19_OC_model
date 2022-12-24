@@ -24,8 +24,8 @@ dat_tidy <-
   unite(col = name, sum_type, name) %>% 
   pivot_wider(names_from = name, values_from = value)
 
-vector_gq_path <- 
-  tibble(full_path = dir_ls("results/tidy_vector_generated_quantities")) %>% 
+posterior_generated_quantities_path <- 
+  tibble(full_path = dir_ls("results/tidy_posterior_generated_quantities")) %>% 
   mutate(model_id = full_path %>% 
            str_extract("(?<=model_id=)\\d+") %>% 
            as.numeric()) %>% 
@@ -43,38 +43,39 @@ vector_gq_path <-
          use_tests == T) %>% 
   pull(full_path)
 
-vector_gq <- 
-  read_csv(vector_gq_path) %>% 
+all_posterior_generated_quantities <- 
+  read_csv(posterior_generated_quantities_path) %>% 
   filter(date <= max_date) %>% 
   filter(name %in% c("C", "I", "IFR_t", "R₀_t", "Rₜ_t", "α_t"))
 
+R_y_lims <- c(0.25, 3.01)
 
 R0_plot <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "R₀_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
-  scale_y_continuous(name = my_labeller["R₀_t"], limits = c(0.25, 3)) +
+  scale_y_continuous(name = my_labeller["R₀_t"], limits = R_y_lims) +
   ggtitle("Posterior Basic Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   my_theme +
   theme(legend.position = c(0.05, 0.8), legend.direction="vertical")
 
 Rt_plot <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "Rₜ_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
-  scale_y_continuous(name = my_labeller["Rₜ_t"], limits = c(0.25, 3)) +
+  scale_y_continuous(name = my_labeller["Rₜ_t"], limits = R_y_lims) +
   ggtitle("Posterior Effective Reproduction Number") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   my_theme +
   theme(legend.position = "none")
 
 alpha_plot <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "α_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
@@ -85,7 +86,7 @@ alpha_plot <-
   theme(legend.position = "none")
 
 ifr_t_plot <- 
-  vector_gq %>%
+  all_posterior_generated_quantities %>%
   filter(name == "IFR_t") %>% 
   ggplot(aes(date, value, ymin = .lower, ymax = .upper)) +
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
@@ -97,7 +98,7 @@ ifr_t_plot <-
 
 
 cumulative_latent_case_ratio_plot <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "C") %>% 
   left_join(dat_tidy) %>% 
   drop_na() %>% 
@@ -111,7 +112,7 @@ cumulative_latent_case_ratio_plot <-
   theme(legend.position = "none")
 
 weekly_latent_case_ratio_plot <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "I") %>% 
   left_join(dat_tidy) %>% 
   drop_na() %>% 
@@ -133,7 +134,6 @@ main_posterior_results_plot <-
             weekly_latent_case_ratio_plot,
             cumulative_latent_case_ratio_plot,
             ncol = 2, align = "hv")
-
 
 save_plot(filename = path(figures_dir, "main_posterior_results_plot", ext = "pdf"),
           plot = main_posterior_results_plot,

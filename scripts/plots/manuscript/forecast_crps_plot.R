@@ -5,16 +5,12 @@ source("src/plot_functions.R")
 
 model_info <-
   read_csv("model_table.csv") %>%
-  distinct(model_design, .keep_all = TRUE) %>%
-  select(-c(model_id, seed)) %>%
-  left_join(
-    tibble(file_path = dir_ls("results/posterior_predictive/")) %>%
-      mutate(model_design = file_path %>%
-        str_extract("(?<=model_design=)\\d+") %>%
-        as.integer()) %>%
-      select(-file_path)
-  ) %>%
-  distinct(
+  select(-model_id, -seed) %>%
+  distinct()
+
+models_to_keep <-
+  model_info %>%
+  count(
     constant_alpha,
     constant_IFR,
     constant_R0,
@@ -25,20 +21,22 @@ model_info <-
     use_seroprev,
     use_tests
   ) %>%
-  mutate(model_group = seq_len(n()))
+  filter(n > 1) %>%
+  mutate(model_group = 1:n()) %>%
+  left_join(model_info) %>%
+  rename(model = model_design)
 
-pred_score_tbl <- map_dfr(dir_ls("results/prediction_score"), read_csv)
+pred_score_tbl <- map_dfr(dir_ls("results/posterior_predictive_score"), read_csv) %>%
+  arrange(model)
 
 forecast_crps_plot <-
   pred_score_tbl %>%
-  add_count(model) %>%
-  filter(n > 8) %>%
-  select(-n) %>%
+  filter(model %in% models_to_keep$model) %>%
   filter(
     target_type == "deaths",
     weeks_ahead %in% c(1, 4)
   ) %>%
-  left_join(model_info, by = c("model" = "model_group")) %>%
+  left_join(models_to_keep) %>%
   ggplot(aes(date, crps, color = use_tests, linetype = use_seroprev)) +
   facet_wrap(. ~ weeks_ahead,
     ncol = 1, scales = "free_y",

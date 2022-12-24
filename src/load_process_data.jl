@@ -7,6 +7,8 @@ if !@isdefined(max_t_forecast)
     max_t_forecast = max_t
 end
 
+const time_interval_in_days = 7.0
+
 full_dat = CSV.read("data/oc_data.csv", DataFrame)[:, [:time, :cases, :tests, :deaths]]
 seroprev_dat = CSV.read("data/oc_seroprev_data.csv", DataFrame)
 

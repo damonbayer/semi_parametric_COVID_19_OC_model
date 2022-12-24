@@ -246,6 +246,12 @@ end
 resultsdir(args...) = projectdir("results", args...)
 export resultsdir
 
+function getlogp_chain(chn::Chains)
+    lp_chn = Chains(set_section(chn, Dict(:internals => [:lp])), :internals)
+    setrange(lp_chn, 1:1:length(lp_chn.value.axes[1]))
+end
+export getlogp_chain
+
 # from https://gist.github.com/torfjelde/37be5a672d29e473983b8e82b45c2e41
 generate_names(val) = generate_names("", val)
 generate_names(vn_str::String, val::Real) = [vn_str;]

@@ -14,6 +14,11 @@ dat <-
 
 max_date <- max(dat$date)
 
+model_table <-
+  read_csv("model_table.csv") %>% 
+  select(-model_id, -seed) %>% 
+  distinct()
+
 dat_tidy <-
   dat %>% 
   select(date, cases, tests, deaths) %>% 
@@ -21,33 +26,40 @@ dat_tidy <-
   select(-tests) %>% 
   pivot_longer(-date)
 
-all_vector_pp <- 
+all_posterior_predictive <- 
   tibble(full_path = dir_ls("results/tidy_posterior_predictive")) %>% 
   mutate(model_design = full_path %>% 
            str_extract("(?<=model_design=)\\d+") %>% 
            as.integer()) %>% 
   left_join(model_table) %>% 
-  filter(max_t == 42) %>%
-  filter(double_IFR_0 == F,
+  filter(max_t == 42,
+         double_IFR_0 == F,
          half_alpha_0 == F,
          half_R0_0 == F,
          half_S_0 == F,
          use_seroprev == T,
-         use_tests == T) %>%
+         use_tests == T) %>% 
   select(full_path, model_design, starts_with("constant")) %>% 
   mutate("all_time_varying" = !constant_alpha & !constant_IFR & !constant_R0) %>% 
   pivot_longer(-c(full_path, model_design), names_to = "model_name") %>% 
   filter(value) %>% 
   select(-value) %>% 
-  mutate(pp_data = map(full_path, read_csv)) %>% 
+  mutate(posterior_predictive = map(full_path, read_csv)) %>% 
   select(-full_path) %>% 
-  arrange(model_design) %>% 
-  unnest(pp_data) %>% 
-  filter(date <= max_date)
+  unnest(posterior_predictive) %>% 
+  filter(date <= max_date) %>% 
+  bind_rows(
+    .,
+    filter(., name == "cases") %>%
+      mutate(name = "test_positivity") %>%
+      left_join(dat %>% select(date, tests)) %>%
+      mutate(across(c(value, .lower, .upper), ~ . / tests)) %>%
+      select(-tests)
+  )
 
 deaths_plot <- 
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = all_vector_pp %>% 
+  geom_lineribbon(data = all_posterior_predictive %>% 
                     filter(name == "deaths",
                            .width == 0.8),
                   mapping = aes(ymin = .lower, ymax = .upper,
@@ -72,7 +84,7 @@ deaths_plot <-
 
 test_positivity_plot <- 
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = all_vector_pp %>% 
+  geom_lineribbon(data = all_posterior_predictive %>% 
                     filter(name == "test_positivity",
                            .width == 0.8),
                   mapping = aes(ymin = .lower, ymax = .upper,

@@ -82,11 +82,11 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   if use_tests
     α_init_non_centered = α_t_params_non_centered[1]
     α_init = exp(α_init_non_centered * α_init_non_centered_sd + α_init_non_centered_mean)
-    α_t_values_with_init = constant_alpha ? repeat([α_init], l_param_change_times_alpha + 1) : vcat(α_init, exp.(log(α_init) .+ cumsum(vec(log_α_t_steps_non_centered) * σ_α)))
+    α_t_values_with_init = constant_alpha ? repeat([α_init], l_param_change_times + 1) : vcat(α_init, exp.(log(α_init) .+ cumsum(vec(log_α_t_steps_non_centered) * σ_α)))
   else
     ρ_cases_init_non_centered = ρ_cases_t_params_non_centered[1]
     ρ_cases_init = logistic(ρ_cases_init_non_centered * ρ_cases_init_non_centered_sd + ρ_cases_init_non_centered_mean)
-    ρ_cases_t_values_with_init = constant_alpha ? repeat([ρ_cases_init], l_param_change_times_alpha + 1) : vcat(ρ_cases_init, exp.(logit(ρ_cases_init) .+ cumsum(vec(logit_ρ_cases_t_steps_non_centered) * σ_ρ_cases)))
+    ρ_cases_t_values_with_init = constant_alpha ? repeat([ρ_cases_init], l_param_change_times + 1) : vcat(ρ_cases_init, exp.(logit(ρ_cases_init) .+ cumsum(vec(logit_ρ_cases_t_steps_non_centered) * σ_ρ_cases)))
   end
 
   # Initial Conditions
@@ -160,8 +160,8 @@ prob = ODEProblem{true}(seirdc_log_ode!,
     D=sol_reg_scale_array[5, :],
     C=sol_reg_scale_array[6, :],
     prevalence=sol_reg_scale_array[2, :] + sol_reg_scale_array[3, :],
-    dur_latent_days=7 / γ,
-    dur_infectious_days=7 / ν,
+    dur_latent_days=time_interval_in_days / γ,
+    dur_infectious_days=time_interval_in_days / ν,
     ϕ_deaths=ϕ_deaths,
     ρ_death=ρ_death,
     deaths_mean=deaths_mean,

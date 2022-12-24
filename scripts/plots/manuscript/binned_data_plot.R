@@ -38,13 +38,3 @@ binned_data_plot <-
 
 
 save_plot(filename = path(figures_dir, "binned_data_plot", ext = "pdf"), plot = binned_data_plot, ncol = 2, nrow = 2)
-
-simulated_dat <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/data/simulated_data/simulated_data_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
-  slice(1) %>% 
-  select(-c(iteration, chain, starts_with("data_seroprev_cases"))) %>% 
-  pivot_longer(everything()) %>% 
-  mutate(time = str_extract(name, "(?<=\\[)\\d+(?=\\])") %>% as.numeric()) %>% 
-  mutate(name = if_else(str_detect(name,"^.+\\["), str_extract(name, "^.+(?=\\[)"), name)) %>% 
-  mutate(name = str_remove(name, "data_new_")) %>% 
-  pivot_wider(names_from = name, values_from = value) %>% 
-  left_join(dat %>% select(-deaths, - cases))

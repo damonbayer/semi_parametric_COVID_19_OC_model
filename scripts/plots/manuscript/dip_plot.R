@@ -24,8 +24,8 @@ dat_tidy <-
   unite(col = name, sum_type, name)
 
 
-vector_gq_path <- 
-  tibble(full_path = dir_ls("results/tidy_vector_generated_quantities")) %>% 
+posterior_generated_quantities_path <- 
+  tibble(full_path = dir_ls("results/tidy_posterior_generated_quantities")) %>% 
   mutate(model_id = full_path %>% 
            str_extract("(?<=model_id=)\\d+") %>% 
            as.numeric()) %>% 
@@ -43,8 +43,8 @@ vector_gq_path <-
          use_tests == T) %>% 
   pull(full_path)
 
-vector_gq <- 
-  read_csv(vector_gq_path) %>% 
+all_posterior_generated_quantities <- 
+  read_csv(posterior_generated_quantities_path) %>% 
   filter(date <= max_date)
 
 deaths_annotation_data_x <- lubridate::ymd("2020-12-31")
@@ -61,10 +61,10 @@ deaths_annotation_data_y <- 500
 
 deaths_annotation_posterior_x <- lubridate::ymd("2020-06-01")
 
-deaths_annotation_posterior_x_end <- max(vector_gq$date) - 7
+deaths_annotation_posterior_x_end <- max(all_posterior_generated_quantities$date) - 7
 
 deaths_annotation_posterior_y_end <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "D",
          date == deaths_annotation_posterior_x_end,
          .width == 0.95) %>% 
@@ -74,7 +74,7 @@ deaths_annotation_posterior_y <- 1000
 
 deaths_plot <- 
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = vector_gq %>% 
+  geom_lineribbon(data = all_posterior_generated_quantities %>% 
                     filter(name == "D"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   color = brewer_line_color, key_glyph = "rect") +
@@ -121,14 +121,14 @@ cases_annotation_x_end <- lubridate::ymd("2020-08-16")
 cases_annotation_y <- 1250000
 
 cases_annotation_y_end <- 
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "C",
          date == cases_annotation_x_end,
          .width == 0.95) %>% 
   pull(.upper)
 
 seroprev_interval <-
-  vector_gq %>% 
+  all_posterior_generated_quantities %>% 
   filter(name == "C",
          date == cases_annotation_x_end,
          .width == 0.95) %>% 
@@ -139,7 +139,7 @@ seroprev_interval <-
 
 cases_plot <- 
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = vector_gq %>% 
+  geom_lineribbon(data = all_posterior_generated_quantities %>% 
                     filter(name == "C"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   color = brewer_line_color, key_glyph = "rect") +
@@ -168,7 +168,7 @@ cases_plot <-
 
 prevalence_plot <- 
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = vector_gq %>% 
+  geom_lineribbon(data = all_posterior_generated_quantities %>% 
                     filter(name == "prevalence"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   color = brewer_line_color, key_glyph = "rect") +
@@ -186,46 +186,3 @@ save_plot(filename = path(figures_dir, "dip_plot", ext = "pdf"),
           ncol = 3,
           nrow = 1,
           base_asp = 1.25)
-
-scalar_gq_path <- 
-  tibble(full_path = dir_ls("results/tidy_scalar_generated_quantities")) %>% 
-  mutate(model_id = full_path %>% 
-           str_extract("(?<=model_id=)\\d+") %>% 
-           as.numeric()) %>% 
-  left_join(model_table %>% distinct(model_design, .keep_all = T)) %>% 
-  select(-model_id, -seed) %>% 
-  filter(constant_alpha == F,
-         constant_IFR == F,
-         constant_R0 == F,
-         double_IFR_0 == F,
-         half_alpha_0 == F,
-         half_R0_0 == F,
-         half_S_0 == F,
-         max_t == 42,
-         use_seroprev == T,
-         use_tests == T) %>% 
-  pull(full_path)
-
-scalar_gq <- 
-  read_csv(scalar_gq_path)
-
-scalar_gq %>%
-  filter(name == "ρ_death",
-         .width == 0.95)
-
-right_join(
-  vector_gq %>% 
-    filter(name == "C") %>% 
-    select(-name) %>% 
-    rename(median = value),
-  dat_tidy %>% 
-    filter(name == "cumulative_cases")) %>%
-  mutate(across(c(median, .lower, .upper), ~`/`(., value))) %>% 
-  filter(date == max(date))
-
-
-vector_gq %>% 
-  filter(name == "prevalence",
-         .width == 0.95) %>% 
-  filter(value == max(value)) %>% 
-  mutate(across(c(value, .lower, .upper), ~`/`(., popsize)))

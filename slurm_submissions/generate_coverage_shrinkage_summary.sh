@@ -3,16 +3,16 @@
 #SBATCH -p standard   ## run on the standard partition
 #SBATCH -A vminin_lab ## account to charge
 #SBATCH -N 1          ## run on a single node
-#SBATCH -n 4          ## request 4 tasks (4 CPUs)
-#SBATCH -t 06:00:00   ## 1 hr run time limit
+#SBATCH -n 1          ## request 4 tasks (4 CPUs)
+#SBATCH -t 01:00:00   ## 1 hr run time limit
 #SBATCH --mem=4G
-#SBATCH -o fit_simulated-%A-%a.out
+#SBATCH -o tidy_simulated_predictive_and_generated_quantities-%A-%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=1-200
+#SBATCH --array=1
 
 module purge
-module load julia/1.8.3
+module load R
 cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
 
-julia --project --threads 4 scripts/simulation/fit_simulated_model.jl $SLURM_ARRAY_TASK_ID
+Rscript scripts/simulation/oc_like/generate_coverage_shrinkage_summary.R
