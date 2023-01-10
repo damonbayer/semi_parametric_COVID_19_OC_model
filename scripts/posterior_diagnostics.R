@@ -23,7 +23,8 @@ variable_name_key <-
   )
 
 posterior_lp <- 
-  enframe(dir_ls("results/posterior_lp"), name = NULL) %>% 
+  dir_ls("results/posterior_lp") %>% 
+  enframe(name = NULL) %>% 
   filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>% 
   pull(value) %>% 
   read_csv() %>% 
