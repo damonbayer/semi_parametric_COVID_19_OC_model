@@ -5,7 +5,8 @@ all_metrics <-
   read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv") %>%
   mutate(method = method |> 
            fct_inorder() |> 
-           fct_recode(`True Model` = "Full Model"))
+           fct_recode(`True Model` = "Full Model")) %>% 
+  filter(method != "Rt-estim-gamma")
 
 envelope_plot <-
   all_metrics %>%
