@@ -2,7 +2,7 @@ library(tidyverse)
 source("src/plot_functions.R")
 
 all_metrics <-
-  read_csv("results/simulated_rt_comparison/simulated_rt_comparison_all_metrics.csv") %>%
+  read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv") %>%
   mutate(method = method |> 
            fct_inorder() |> 
            fct_recode(`True Model` = "Full Model"))

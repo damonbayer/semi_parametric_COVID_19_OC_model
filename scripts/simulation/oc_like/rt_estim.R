@@ -6,7 +6,7 @@ oc_data <- read_csv("data/oc_data.csv")
 
 # Load data for target_sim_id
 simulation_data <-
-  read_csv("data/simulated_data/simulated_data_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>%
+  read_csv("data/simulation/oc_like/simulated_data.csv") %>%
   select(sim_id = iteration, everything(), -chain) %>%
   pivot_longer(-sim_id, names_to = "name_raw") %>%
   filter(sim_id == target_sim_id) %>%
@@ -21,11 +21,10 @@ simulation_data <-
   select(time, total_cases = new_cases, tests) %>%
   rename(total_tests = tests)
 
-dir_create(path("results", "simulated_rt_comparison", "estimgamma"))
-dir_create(path("results", "simulated_rt_comparison", "estimnormal"))
+dir_create(path("results", "simulation", "oc_like", "estimgamma"))
+dir_create(path("results", "simulation", "oc_like", "estimnormal"))
 
-gq_file_name <- "true_generated_quantities_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv"
-gq <- read_csv(path("data/simulated_data", gq_file_name))
+gq <- read_csv("data/simulation/oc_like/true_generated_quantities.csv")
 
 # Run Epidemia -----------------------------------------------
 data_length <- dim(simulation_data)[1]
@@ -98,7 +97,7 @@ estimnormal_posterior_rt <-
   dplyr::select(time, name, value, .lower, .upper, .width, method)
 
 estimnormal_file_name <- paste0("simulated_rt_comparison_model_id=estimnormal_sim_id=", target_sim_id, ".csv")
-write_csv(estimnormal_posterior_rt, path("results", "simulated_rt_comparison", "estimnormal", estimnormal_file_name))
+write_csv(estimnormal_posterior_rt, path("results", "simulation", "oc_like", "estimnormal", estimnormal_file_name))
 
 # Run Rt_estim gamma -----------------------------------------
 # run spline for kappa priors
@@ -160,4 +159,4 @@ summary_rtestimgamma <-
   dplyr::select(time, name, value, .lower, .upper, .width, method)
 
 estimgamma_file_name <- paste0("simulated_rt_comparison_model_id=estimgamma_sim_id=", target_sim_id, ".csv")
-write_csv(summary_rtestimgamma, path("results", "simulated_rt_comparison", "estimgamma", estimgamma_file_name))
+write_csv(summary_rtestimgamma, path("results", "simulation", "oc_like", "estimgamma", estimgamma_file_name))

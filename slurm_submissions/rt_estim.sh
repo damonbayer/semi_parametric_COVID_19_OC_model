@@ -15,4 +15,4 @@ module purge
 module load R
 cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
 
-Rscript scripts/rt_comparison/rt_estim.R $SLURM_ARRAY_TASK_ID
+Rscript scripts/simulation/oc_like/rt_estim.R $SLURM_ARRAY_TASK_ID
