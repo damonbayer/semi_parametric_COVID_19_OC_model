@@ -1,6 +1,9 @@
 library(tidyverse)
 library(posterior)
 library(kableExtra)
+source("src/plot_functions.R")
+
+target_model_design <- 46
 
 variable_name_key <-
   c(
@@ -19,19 +22,24 @@ variable_name_key <-
     α_t = "$\\exp\\left(\\tilde{\\alpha}_t\\right)$"
   )
 
-main_model_results <-
-  read_csv("results/generated_quantities/generated_quantities_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42_model_design=46_model_id=181_use_seroprev=true_use_tests=true.csv") %>%
-  rename_with(~ str_c(".", .), c(iteration, chain)) %>%
+posterior_lp <- 
+  enframe(dir_ls("results/posterior_lp"), name = NULL) %>% 
+  filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>% 
+  pull(value) %>% 
+  read_csv() %>% 
   as_draws()
 
-summarized_results <-
-  main_model_results %>%
-  summarize_draws("$\\hat{R}$" = rhat, "ESS" = ess_basic, .cores = 8) %>%
-  rename(Parameter = variable)
+posterior_diagnostics <- 
+  enframe(dir_ls("results/posterior_diagnostics"), name = NULL) %>% 
+  filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>% 
+  pull(value) %>% 
+  read_csv()
 
-summarized_results %>%
-  filter(str_detect(Parameter, "\\[\\d+\\]", negate = T)) %>%
-  mutate(Parameter = variable_name_key[Parameter]) %>%
+posterior_diagnostics %>% 
+  filter(is.na(date)) %>% 
+  filter(name != "lp") %>% 
+  mutate(Parameter = variable_name_key[name]) %>% 
+  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>% 
   kable(
     format = "latex",
     escape = F,
@@ -42,29 +50,13 @@ summarized_results %>%
   ) %>%
   save_kable(file = "~/Documents/semi_parametric_COVID_19_OC_manuscript/tables/univariate_diagnostics.tex")
 
-
-summarized_results %>%
-  rename(name_raw = Parameter) %>%
-  filter(str_detect(name_raw, "\\[\\d+\\]")) %>%
-  mutate(
-    parameter = name_raw %>% str_extract("^.+(?=\\[\\d+\\])"),
-    index = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric()
-  ) %>%
-  select(-name_raw) %>%
-  filter(parameter %in% c("α_t", "Rₜ_t", "IFR_t")) %>%
-  mutate(parameter = variable_name_key[parameter]) %>%
-  pivot_longer(cols = c("$\\hat{R}$", "ESS")) %>%
-  select(-index) %>%
-  group_by(parameter, name) %>%
-  summarize(
-    min = min(value),
-    avg = mean(value),
-    max = max(value)
-  ) %>%
-  rename_with(str_to_title) %>%
-  rename_with(~ str_c(., "."), .cols = c(Min, Avg, Max)) %>%
-  pivot_wider(names_from = "Name", values_from = str_c(str_to_title(c("min", "avg", "max")), "."), names_sep = " ") %>%
-  relocate(Parameter, ends_with("$")) %>%
+posterior_diagnostics %>% 
+  filter(name %in% c("α_t", "Rₜ_t", "IFR_t")) %>% 
+  mutate(Parameter = variable_name_key[name]) %>% 
+  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>% 
+  drop_na() %>% 
+  group_by(Parameter) %>% 
+  summarize(across(where(is.numeric), list(min = min,  avg = mean, max = max), .names = "{str_to_title(.fn)}. {.col}")) %>% 
   kable(format = "latex",
         escape = F,
         caption = "Convergence diagnostics for time-varying parameters for the main model fit to the Orange County data set.",
