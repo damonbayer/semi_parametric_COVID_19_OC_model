@@ -160,12 +160,12 @@ save_plot(filename = path(figures_dir, "simulated_binned_data_plot", ext = "pdf"
 
 save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_compartment_plot", ext = "pdf"),
           plot = single_generated_quantities_simulation_compartment_plot,
-          ncol = 3, nrow = 2)
+          ncol = 3, nrow = 2, base_height = 2)
 
 save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_scalar_plot", ext = "pdf"),
           plot = single_generated_quantities_simulation_scalar_plot,
-          ncol = 3, nrow = 3)
+          ncol = 3, nrow = 3, base_height = 2)
 
 save_plot(filename = path(figures_dir, "single_generated_quantities_simulation_time_varying_plot", ext = "pdf"),
           plot = single_generated_quantities_simulation_time_varying_plot,
-          ncol = 3, nrow = 2)
+          ncol = 3, nrow = 2, base_height = 2)

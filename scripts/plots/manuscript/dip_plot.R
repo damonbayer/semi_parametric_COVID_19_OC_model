@@ -185,4 +185,4 @@ save_plot(filename = path(figures_dir, "dip_plot", ext = "pdf"),
           plot = dip_plot,
           ncol = 3,
           nrow = 1,
-          base_asp = 1.25)
+          base_asp = 1.25, base_height = 3.5)

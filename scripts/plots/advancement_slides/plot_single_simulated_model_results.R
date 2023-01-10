@@ -6,7 +6,7 @@ source("src/plot_functions.R")
 real_dat <- read_csv("data/oc_data.csv") %>% 
   filter(time <= 42)
 
-simulated_dat <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/data/simulated_data/simulated_data_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
+simulated_dat <- read_csv("~/Documents/semi_parametric_COVID_19_OC_model/data/simulated_data/simulated_data_constant_IFR=false_constant_R0=false_constant_alpha=false_double_IFR_0=false_half_R0_0=false_half_S_0=false_half_alpha_0=false_max_t=42.0_seed=1_use_seroprev=true_use_tests=true.csv") %>% 
   slice(1) %>% 
   select(-c(iteration, chain, starts_with("data_seroprev_cases"))) %>% 
   pivot_longer(everything()) %>% 

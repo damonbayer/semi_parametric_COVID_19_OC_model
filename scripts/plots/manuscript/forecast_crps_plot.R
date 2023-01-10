@@ -64,9 +64,9 @@ forecast_crps_plot <-
 
 
 save_plot(
-  filename = "/Users/damon/Documents/semi_parametric_COVID_19_OC_manuscript/figures/forecast_crps_plot.pdf",
+  filename = "~/Documents/semi_parametric_COVID_19_OC_manuscript/figures/forecast_crps_plot.pdf",
   plot = forecast_crps_plot,
   ncol = 1,
   nrow = 2,
-  base_asp = 3
+  base_asp = 2
 )

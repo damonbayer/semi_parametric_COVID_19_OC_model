@@ -98,15 +98,15 @@ time_varying_sensitivity_plot <-
 
 save_plot(filename = path(figures_dir, "scalar_sensitivity_plot", ext = "pdf"),
           plot = scalar_sensitivity_plot,
-          ncol = 4, nrow = 3, base_asp = 1,
+          ncol = 4, nrow = 3, base_asp = 1, base_height = 2.5,
           device = cairo_pdf)
 
 save_plot(filename = path(figures_dir, "compartments_sensitivity_plot", ext = "pdf"),
           plot = compartments_sensitivity_plot,
-          ncol = 5, nrow = 5,
+          ncol = 5, nrow = 5, base_height = 1.5,
           device = cairo_pdf)
 
 save_plot(filename = path(figures_dir, "time_varying_sensitivity_plot", ext = "pdf"),
           plot = time_varying_sensitivity_plot,
-          ncol = 5, nrow = 5,
+          ncol = 5, nrow = 5, base_height = 1.5,
           device = cairo_pdf)
