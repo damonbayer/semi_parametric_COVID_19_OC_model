@@ -6,7 +6,7 @@
 #SBATCH -n 4          ## request 4 tasks (4 CPUs)
 #SBATCH -t 01:00:00   ## 1 hr run time limit
 #SBATCH --mem=4G
-#SBATCH -o rt_estim-%A-%a.out
+#SBATCH -o rt_estim_oc_like-%A-%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
 #SBATCH --array=1-200
