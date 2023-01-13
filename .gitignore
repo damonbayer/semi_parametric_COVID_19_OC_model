@@ -106,3 +106,4 @@ results/*
 /illustrative_examples/age_structure/data
 /experiments
 *.jld2
+*.pdf

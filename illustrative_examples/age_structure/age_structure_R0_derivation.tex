@@ -1,0 +1,147 @@
+\documentclass[11pt]{article}
+\usepackage{bm}
+\usepackage{db}
+\usepackage{amsmath}
+%\newcommand{\matr}[1]{\bm{#1}}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+
+\begin{document}
+
+I am following along from Section 2.1 of \href{https://paperpile.com/app/p/3ac94d2d-a793-030e-b8a5-93733f228342}{``The construction of next-generation matrices for compartmental epidemic models."}
+
+Let \( \matr{x} = \begin{bmatrix} E_v & E_g & I_v & I_g \end{bmatrix}^\prime \) be the infection subsystem of our model.
+The non-linearized infection subsystem of our model is:
+
+\[
+	\dot{\matr{x}}	=
+	\begin{bmatrix}
+		\left(\beta_{vv} I_v + \beta_{vg} I_g \right) \frac{S_v}{N} - \gamma E_v\\
+		\left(\beta_{gg} I_g + \beta_{gv} I_v \right) \frac{S_g}{N} - \gamma E_g \\
+		\gamma E_v - \nu I_v \\
+		\gamma E_g - \nu I_g \\
+	\end{bmatrix}
+\]
+
+Then the Jacobian is:
+
+
+\begin{align*}
+	\matr{J} =&
+	\begin{bmatrix}
+		\frac{\partial \dot{E}_v}{\partial E_v} & 	\frac{\partial \dot{E}_v}{\partial E_g} & 	\frac{\partial \dot{E}_v}{\partial I_v} & 	\frac{\partial \dot{E}_v}{\partial I_g} \\
+		\frac{\partial \dot{E}_g}{\partial E_v} & 	\frac{\partial \dot{E}_g}{\partial E_g} & 	\frac{\partial \dot{E}_g}{\partial I_v} & 	\frac{\partial \dot{E}_g}{\partial I_g}\\
+		\frac{\partial \dot{I}_v}{\partial E_v} & 	\frac{\partial \dot{I}_v}{\partial E_g} & 	\frac{\partial \dot{I}_v}{\partial I_v} & 	\frac{\partial \dot{I}_v}{\partial I_g}\\
+		\frac{\partial \dot{I}_g}{\partial E_v} & 	\frac{\partial \dot{I}_g}{\partial E_g} & 	\frac{\partial \dot{I}_g}{\partial I_v} & 	\frac{\partial \dot{I}_g}{\partial I_g}\\
+	 \end{bmatrix}\\
+	 =&
+	\begin{bmatrix}
+		-\gamma	& 0	&	\beta_{vv} \left( \frac{S_v}{N} \right)	&	\beta_{vg} \left( \frac{S_v}{N} \right)	\\
+		0	&	-\gamma	&	\beta_{gv} \left( \frac{S_g}{N} \right)	&	\beta_{gg} \left( \frac{S_g}{N} \right)	\\
+		\gamma	&	0	&	-\nu		&	0	\\
+		0	&	\gamma	&	0	&	-\nu
+	 \end{bmatrix}
+\end{align*}
+
+At the infection-free steady-state we have \( S_v + S_g = N \), and all other compartments equal to 0.
+Let \( S_v = \rho N \) and \( S_g = (1 - \rho) N \).
+Then the linearized subsystem at the infection-free steady state is given by
+
+\begin{align*}
+	\dot{\matr{x}} =& \matr{J}\rvert_{S_v + S_g = N} \matr{x}\\
+	=& 
+	\begin{bmatrix}
+		-\gamma	& 0	&	\beta_{vv} \left( \frac{S_v}{N} \right)	&	\beta_{vg} \left( \frac{S_v}{N} \right)	\\
+		0	&	-\gamma	&	\beta_{gv} \left( \frac{S_g}{N} \right)	&	\beta_{gg} \left( \frac{S_g}{N} \right)	\\
+		\gamma	&	0	&	-\nu		&	0	\\
+		0	&	\gamma	&	0	&	-\nu
+	 \end{bmatrix}
+	\begin{bmatrix} E_v \\ E_g \\ I_v \\ I_g \end{bmatrix} \\
+	=& 
+	\begin{bmatrix}
+		-\gamma	& 0	&	\beta_{vv} \left( \rho \right)	&	\beta_{vg} \left( \rho \right)	\\
+		0	&	-\gamma	&	\beta_{gv} \left( 1 - \rho \right)	&	\beta_{gg} \left( 1 - \rho \right)	\\
+		\gamma	&	0	&	-\nu		&	0	\\
+		0	&	\gamma	&	0	&	-\nu
+	 \end{bmatrix}
+	 \begin{bmatrix} E_v \\ E_g \\ I_v \\ I_g \end{bmatrix}
+\end{align*}
+
+
+We want to write the linearized infection subsystem in the form
+
+\[ \dot{\bm{x}}=(\bm{T}+\bm{\Sigma}) \bm{x} \]
+
+where the matrix \( \bm{T} \) corresponds to transmissions and the matrix \( \bm{\Sigma} \) to transitions.
+
+Thus,
+
+\[ \matr{T} = 
+	\begin{bmatrix}
+		0	& 0	&	\beta_{vv} \left( \rho \right)	&	\beta_{vg} \left( \rho \right)	\\
+		0	&	0	&	\beta_{gv} \left( 1 - \rho \right)	&	\beta_{gg} \left( 1 - \rho \right)	\\
+		0	&	0	&	0	&	0	\\
+		0	&	0	&	0	&	0
+	 \end{bmatrix}
+\]
+
+and
+
+\[ \matr{\Sigma} =
+	\begin{bmatrix}
+		-\gamma	& 0	&	0	&	0)	\\
+		0	&	-\gamma	&	0	&	0	\\
+		\gamma	&	0	&	-\nu		&	0	\\
+		0	&	\gamma	&	0	&	-\nu
+	 \end{bmatrix}
+ \]
+
+
+Now, the NGM with large domain (\( \matr{K_L} \)) is given by
+
+\begin{align*}
+	\matr{K_L}	=&	-\matr{T}\matr{\Sigma}^{-1}\\
+	=&	-\begin{bmatrix}
+		0	& 0	&	\beta_{vv}	&	\beta_{vg} \left( \frac{N_v}{N_g} \right)	\\
+		0	&	0	&	\beta_{gv} \left( \frac{N_g}{N_v} \right)	&	\beta_{gg}	\\
+		0	&	0	&	0	&	0	\\
+		0	&	0	&	0	&	0
+	 \end{bmatrix}
+	 \begin{bmatrix}
+		-\frac{1}{\gamma} & 0 & 0 & 0	\\
+		 0 & -\frac{1}{\gamma} & 0 & 0	\\
+		 -\frac{1}{\nu} & 0 & -\frac{1}{\nu} & 0	\\
+		 0 & -\frac{1}{\nu} & 0 & -\frac{1}{\nu}	\\
+	 \end{bmatrix}\\
+	 =& \begin{bmatrix}
+		\frac{\rho  \beta_{vv}}{\nu } & \frac{\rho  \beta_{vg}}{\nu } & \frac{\rho  \beta_{vv}}{\nu } & \frac{\rho  \beta_{vg}}{\nu } \\
+		\frac{(1-\rho ) \beta_{gv}}{\nu } & \frac{(1-\rho ) \beta_{gg}}{\nu } & \frac{(1-\rho ) \beta_{gv}}{\nu } & \frac{(1-\rho ) \beta_{gg}}{\nu } \\
+		0 & 0 & 0 & 0 \\
+		0 & 0 & 0 & 0 \\
+	  \end{bmatrix}
+\end{align*}
+
+The dominant eigenvalue of \( \matr{K_L} \) is \( R_0 \).
+
+However, we  note \( \matr{T} \) has a special structure, with the third and fourth rows being all 0.
+Thus the NGM is only two dimensional.
+
+Now, we define \( \matr{E} \) as consisting of unit column vectors for each row of \( \matr{T} \) that is not identically 0.
+
+\[ \matr{E} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 0 & 0 \\ 0 & 0 \end{bmatrix} \]
+
+Then the NGM is given by
+
+\[
+	\matr{K} = \matr{E}^\prime \matr{K_L} \matr{E} = 
+\begin{bmatrix}
+	\frac{\rho  \beta_{vv}}{\nu } & \frac{\rho  \beta_{vg}}{\nu } \\
+	\frac{(1-\rho ) \beta_{gv}}{\nu } & \frac{(1-\rho ) \beta_{gg}}{\nu }
+\end{bmatrix}
+\]
+
+The dominant eigenvalue of this matrix is \(  R_0 \)  and can be computed.
+
+
+
+\end{document}
