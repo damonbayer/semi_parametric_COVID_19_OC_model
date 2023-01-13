@@ -104,10 +104,10 @@ new_latent_cases_o = sol_array[6, 2:end] - sol_array[6, 1:(end-1)]
 new_latent_cases_y = sol_array[12, 2:end] - sol_array[12, 1:(end-1)]
 new_latent_cases_total = new_latent_cases_o + new_latent_cases_y
 
-Random.seed!(1)
-data_new_cases = vcat(rand.(Poisson.(new_latent_cases_o + new_latent_cases_y), 1)...)
-Random.seed!(1)
-data_new_deaths = vcat(rand.(Poisson.(new_latent_deaths_o + new_latent_deaths_y), 1)...)
+Random.seed!(2)
+data_new_cases = vcat(rand.(Poisson.(new_latent_cases_total), 1)...)
+Random.seed!(2)
+data_new_deaths = vcat(rand.(Poisson.(new_latent_deaths_total), 1)...)
 
 dat = DataFrame(time = Int.(obstimes), cases = data_new_cases, deaths = data_new_deaths)
 
@@ -182,18 +182,20 @@ prob = ODEProblem{true}(seirdc_log_ode!,
     dur_infectious_non_centered ~ Normal()
 
     # Transformations
-    γ = exp(-(dur_latent_non_centered * 0.1 + 0.0))
-    ν = exp(-(dur_infectious_non_centered * 0.1 - 0.7))
+    γ = exp(-(dur_latent_non_centered * 0.2 + 0.25))
 
+    ν = exp(-(dur_infectious_non_centered * 0.1 - 1))
 
     σ_IFR_non_centered = IFR_t_params_non_centered[2]
-    σ_IFR = exp(σ_IFR_non_centered * 0.13 + -2)
+    σ_IFR = exp(σ_IFR_non_centered * 0.13 + -1.5)
     logit_IFR_t_steps_non_centered = IFR_t_params_non_centered[3:end]
 
-    R₀_init = exp(R₀_init_non_centered * 0.2 + log(1.5))
+    R₀_init = exp(R₀_init_non_centered * 0.1 + 0.5)
 
     IFR_init_non_centered = IFR_t_params_non_centered[1]
-    IFR_init = logistic(IFR_init_non_centered * 0.2 + logit(0.06))
+
+    IFR_init = logistic(IFR_init_non_centered * 0.3 - 2.6)
+
 
     β_init = R₀_init * ν
 
