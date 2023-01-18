@@ -123,11 +123,8 @@ ifr_age_structure_generated_quantities_simulation_compartment_plot <-
   geom_line(data = true_generated_quantities %>% 
               filter(name %in% c("S", "E", "I", "R", "D"),
                      population == "combined") %>% 
-              mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D")))) +
-  geom_point(data = true_generated_quantities %>% 
-               filter(name %in% c("S", "E", "I", "R", "D"),
-                      population == "combined") %>% 
-               mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D")))) +
+              mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
+            linetype = "dashed") +
   scale_x_continuous(name = "Time") +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_color_discrete(name = "Distribution", label = str_to_title) +
@@ -152,14 +149,8 @@ ifr_age_structure_generated_quantities_simulation_time_varying_plot <-
                        filter(.width == 0.8) %>%
                        filter(name %in% c("IFR_t", "Rₜ_t")) %>% 
                        pull(time) %>% 
-                       max()), linetype = "dotted") +
-  geom_point(data = true_generated_quantities %>% 
-               filter(name %in% c("IFR_t", "Rₜ_t"),
-                      time <= all_generated_quantities %>%
-                        filter(.width == 0.8) %>%
-                        filter(name %in% c("IFR_t", "Rₜ_t")) %>% 
-                        pull(time) %>% 
-                        max())) +
+                       max()),
+            linetype = "dashed") +
   scale_x_continuous(name = "Time") +
   scale_y_continuous(name = "Value") +
   scale_color_discrete(name = "Distribution", label = str_to_title) +
