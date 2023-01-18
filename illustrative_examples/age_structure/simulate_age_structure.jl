@@ -78,13 +78,12 @@ const popsize = popsize_y + popsize_o
 init_state = [S_o_init, E_o_init, I_o_init, R_o_init, D_o_init, C_o_init,
     S_y_init, E_y_init, I_y_init, R_y_init, D_y_init, C_y_init]
 
-β_oo = 4
+β_yy = β_oo = 4
 γ = 1
 ν = 2
 IFR_o = 0.1
-β_yy = β_oo
 IFR_y = 0.01
-β_yo = β_oy = 1.0
+β_yo = β_oy = 2
 
 NGM = [(ρ * β_oo) / ν (ρ * β_oy) / ν; ((1 - ρ) * β_yo) / ν ((1 - ρ) * β_yy) / ν]
 
@@ -180,9 +179,11 @@ prob = ODEProblem{true}(seirdc_log_ode!,
     IFR_t_params_non_centered ~ MvNormal(Zeros(l_param_change_times + 2), I) # +2, 1 for var, 1 for init
     dur_latent_non_centered ~ Normal()
     dur_infectious_non_centered ~ Normal()
+    # EI_SEI_non_centered ~ Normal()
+    # E_EI_non_centered ~ Normal()
 
     # Transformations
-    γ = exp(-(dur_latent_non_centered * 0.2 + 0.25))
+    γ = exp(-(dur_latent_non_centered * 0.2 - 0.25))
 
     ν = exp(-(dur_infectious_non_centered * 0.1 - 1))
 
@@ -196,8 +197,16 @@ prob = ODEProblem{true}(seirdc_log_ode!,
 
     IFR_init = logistic(IFR_init_non_centered * 0.3 - 2.6)
 
-
     β_init = R₀_init * ν
+
+    # EI_SEI = logistic.(EI_SEI_non_centered * 0.4 .+ logit(12/1100))
+    # I_EI = logistic.(EI_SEI_non_centered * 0.4 .+ logit(1/3))
+
+    # EI_init = EI_SEI * popsize
+
+    # S_init = popsize - EI_init
+    # E_init = (1 - I_EI) * EI_init
+    # I_init = I_EI * EI_init
 
     u0 = [S_init, E_init, I_init, 1.0, 1.0, E_init + I_init] # Intialize with 1 in R and D so there are no problems when we log for ODE
     IFR_t_values_no_init = logistic.(logit(IFR_init) .+ cumsum(logit_IFR_t_steps_non_centered) * σ_IFR)
