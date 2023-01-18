@@ -97,35 +97,13 @@ data_ifr_age_structure_plot <-
   ggtitle("Latent and Observed Cases and Deaths") +
   theme(legend.position = "bottom")
 
-posterior_ifr_age_structure_plot <-
-  ggplot(mapping = aes(time, value)) +
-  geom_lineribbon(mapping = aes(ymin = .lower, ymax = .upper),
-                  data = posterior_generated_quantities %>% 
-                    filter(name == "IFR_t"),
-                  color = brewer_line_color,
-                  step = "hv",
-                  key_glyph = "rect") +
-  geom_step(data = true_generated_quantities %>% 
-              filter(name == "IFR_t") %>% 
-              filter(time <= posterior_generated_quantities %>% 
-                       filter(name == "IFR_t") %>% 
-                       pull(time) %>% 
-                       max()),
-            size = 1.5,
-            linetype = "dotted") +
-  scale_x_continuous("Time") +
-  scale_y_continuous("IFR", labels = percent) +
-  ggtitle(
-    "Posterior Infection Fatality Ratio for Heterogeneous Population",
-    "Modelled as Homogeneous Population"
-  ) +
-  my_theme
-
 posterior_predictive_ifr_age_structure_plot <- 
   ggplot(mapping = aes(time, value)) +
   facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()), ncol = 1) +
   geom_lineribbon(data = posterior_predictive,
-                  mapping = aes(ymin = .lower, ymax = .upper)) +
+                  mapping = aes(ymin = .lower, ymax = .upper),
+                  step = "mid",
+                  color = brewer_line_color) +
   geom_point(data = dat) +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_continuous(name = "Time") +
@@ -166,14 +144,15 @@ ifr_age_structure_generated_quantities_simulation_time_varying_plot <-
                   data = all_generated_quantities %>% 
                     filter(.width == 0.8) %>% 
                     filter(name %in% c("IFR_t", "Rₜ_t")),
-                  alpha = 0.5) +
-  geom_line(data = true_generated_quantities %>% 
+                  alpha = 0.5,
+                  step = "hv") +
+  geom_step(data = true_generated_quantities %>% 
               filter(name %in% c("IFR_t", "Rₜ_t"),
                      time <= all_generated_quantities %>%
                        filter(.width == 0.8) %>%
                        filter(name %in% c("IFR_t", "Rₜ_t")) %>% 
                        pull(time) %>% 
-                       max())) +
+                       max()), linetype = "dotted") +
   geom_point(data = true_generated_quantities %>% 
                filter(name %in% c("IFR_t", "Rₜ_t"),
                       time <= all_generated_quantities %>%
@@ -213,12 +192,6 @@ save_plot(
   plot = data_ifr_age_structure_plot,
   ncol = 1,
   nrow = 2
-)
-
-save_plot(
-  filename = path(figures_dir, "posterior_ifr_age_structure_plot", ext = "pdf"),
-  plot = posterior_ifr_age_structure_plot,
-  base_asp = 2
 )
 
 save_plot(
