@@ -105,7 +105,7 @@ new_latent_cases_total = new_latent_cases_o + new_latent_cases_y
 
 Random.seed!(2)
 data_new_cases = vcat(rand.(Poisson.(new_latent_cases_total), 1)...)
-Random.seed!(2)
+Random.seed!(4)
 data_new_deaths = vcat(rand.(Poisson.(new_latent_deaths_total), 1)...)
 
 dat = DataFrame(time = Int.(obstimes), cases = data_new_cases, deaths = data_new_deaths)
