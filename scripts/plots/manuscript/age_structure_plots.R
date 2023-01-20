@@ -99,7 +99,8 @@ data_ifr_age_structure_plot <-
 
 posterior_predictive_ifr_age_structure_plot <- 
   ggplot(mapping = aes(time, value)) +
-  facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()), ncol = 1) +
+  facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()),
+             nrow = 2) +
   geom_lineribbon(data = posterior_predictive,
                   mapping = aes(ymin = .lower, ymax = .upper),
                   step = "mid",
@@ -107,8 +108,8 @@ posterior_predictive_ifr_age_structure_plot <-
   geom_point(data = dat) +
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_continuous(name = "Time") +
-  ggtitle("Posterior Predictive for Heterogeneous Population",
-          "Modelled as Homogeneous Population") +
+  ggtitle("Posterior Predictive for Structured Population",
+          "Modelled as Unstructured Population") +
   my_theme
 
 ifr_age_structure_generated_quantities_simulation_compartment_plot <- 
@@ -130,7 +131,7 @@ ifr_age_structure_generated_quantities_simulation_compartment_plot <-
   scale_color_discrete(name = "Distribution", label = str_to_title) +
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Compartments",
-          "Heterogeneous Population Modelled as Homogeneous Population,\n80% credible intervals, true values in black") +
+          "Structured Population Modelled as Unstructured Population,\n80% credible intervals, true values in black") +
   theme(legend.position = c(5/6, 1/4))
 
 
@@ -156,7 +157,7 @@ ifr_age_structure_generated_quantities_simulation_time_varying_plot <-
   scale_color_discrete(name = "Distribution", label = str_to_title) +
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Time-Varying Parameters",
-          "Heterogeneous Population Modelled as Homogeneous Population,\n80% credible intervals, true values in black") +
+          "Structured Population Modelled as Unstructured Population,\n80% credible intervals, true values in black") +
   theme(legend.position = "bottom")
 
 ifr_age_structure_generated_quantities_simulation_scalar_plot <- 
@@ -174,7 +175,7 @@ ifr_age_structure_generated_quantities_simulation_scalar_plot <-
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
   ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters",
-          subtitle = "Heterogeneous Population Modelled as Homogeneous Population,\n50%, 80%, 95% credible intervals, true values in black") +
+          subtitle = "Structured Population Modelled as Unstructured Population,\n50%, 80%, 95% credible intervals, true values in black") +
   theme(legend.position = "none")
 
 
