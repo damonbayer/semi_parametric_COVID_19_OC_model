@@ -1,3 +1,4 @@
+# Fit a model with a given model_design
 model_id = isempty(ARGS) ? 309 : parse(Int64, ARGS[1])
 
 using Revise

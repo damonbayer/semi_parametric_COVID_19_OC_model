@@ -1,8 +1,9 @@
+# Description: Run Rt_estim and Epidemia on Orange County data
 library(tidyverse)
 library(fs)
 source("src/rt_comparison_functions.R")
-oc_data <- read_csv("data/oc_data.csv") %>% 
-  select(time, total_cases = cases, total_tests = tests) %>% 
+oc_data <- read_csv("data/oc_data.csv") %>%
+  select(time, total_cases = cases, total_tests = tests) %>%
   filter(time <= 42)
 
 dir_create(path("results", "rt_estim"))

@@ -1,3 +1,4 @@
+# Compute metrics for alternative Rt methods
 library(tidyverse)
 library(fs)
 source("src/rt_comparison_functions.R")
@@ -21,13 +22,13 @@ full_model_cis <-
   mutate(ci = map(full_path,
                   ~read_csv(.) %>%
                     filter(name == "Rₜ_t",
-                           .width == 0.8))) %>% 
+                           .width == 0.8))) %>%
   select(-full_path) %>%
   unnest(ci) %>%
   mutate(method = "full")
 
 # ISAAC TO DO: Rt estim and epidemia reuslts ------------------------------
-rt_estim_cis <- 
+rt_estim_cis <-
   tibble(full_path = dir_ls("results/simulation/oc_like/estimgamma")) %>%
   mutate(sim_id = full_path %>%
     str_extract("(?<=sim_id=)\\d+") %>%

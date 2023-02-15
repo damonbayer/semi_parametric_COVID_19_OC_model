@@ -1,3 +1,4 @@
+# Create posterior diagnositcs tables for manuscript
 library(tidyverse)
 library(posterior)
 library(kableExtra)
@@ -22,25 +23,17 @@ variable_name_key <-
     α_t = "$\\exp\\left(\\tilde{\\alpha}_t\\right)$"
   )
 
-posterior_lp <- 
-  dir_ls("results/posterior_lp") %>% 
-  enframe(name = NULL) %>% 
-  filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>% 
-  pull(value) %>% 
-  read_csv() %>% 
-  as_draws()
-
-posterior_diagnostics <- 
-  enframe(dir_ls("results/posterior_diagnostics"), name = NULL) %>% 
-  filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>% 
-  pull(value) %>% 
+posterior_diagnostics <-
+  enframe(dir_ls("results/posterior_diagnostics"), name = NULL) %>%
+  filter(str_detect(value, str_c("model_design=", target_model_design, "_"))) %>%
+  pull(value) %>%
   read_csv()
 
-posterior_diagnostics %>% 
-  filter(is.na(date)) %>% 
-  filter(name != "lp") %>% 
-  mutate(Parameter = variable_name_key[name]) %>% 
-  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>% 
+posterior_diagnostics %>%
+  filter(is.na(date)) %>%
+  filter(name != "lp") %>%
+  mutate(Parameter = variable_name_key[name]) %>%
+  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>%
   kable(
     format = "latex",
     escape = F,
@@ -51,13 +44,13 @@ posterior_diagnostics %>%
   ) %>%
   save_kable(file = "~/Documents/semi_parametric_COVID_19_OC_manuscript/tables/univariate_diagnostics.tex")
 
-posterior_diagnostics %>% 
-  filter(name %in% c("α_t", "Rₜ_t", "IFR_t")) %>% 
-  mutate(Parameter = variable_name_key[name]) %>% 
-  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>% 
-  drop_na() %>% 
-  group_by(Parameter) %>% 
-  summarize(across(where(is.numeric), list(min = min,  avg = mean, max = max), .names = "{str_to_title(.fn)}. {.col}")) %>% 
+posterior_diagnostics %>%
+  filter(name %in% c("α_t", "Rₜ_t", "IFR_t")) %>%
+  mutate(Parameter = variable_name_key[name]) %>%
+  select(Parameter, "$\\hat{R}$" = rhat, "ESS" = ess_basic) %>%
+  drop_na() %>%
+  group_by(Parameter) %>%
+  summarize(across(where(is.numeric), list(min = min,  avg = mean, max = max), .names = "{str_to_title(.fn)}. {.col}")) %>%
   kable(format = "latex",
         escape = F,
         caption = "Convergence diagnostics for time-varying parameters for the main model fit to the Orange County data set.",

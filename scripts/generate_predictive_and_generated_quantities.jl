@@ -1,3 +1,4 @@
+# Generate predictive and generated quantities for a model with a given model_design
 model_design = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 
 using Revise

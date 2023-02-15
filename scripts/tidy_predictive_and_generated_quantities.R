@@ -1,3 +1,4 @@
+# Compute and store prior and posterior predictive distributions, generated quantites, and posterior diagnositcs for the OC model.
 library(tidyverse)
 library(fs)
 library(tidybayes)
@@ -13,17 +14,17 @@ dat <-
   select(time, cases, deaths, tests, date = end_date) %>%
   mutate(test_positivity = cases / tests)
 
-dat_tidy <- 
-  dat %>% 
-  select(-date, -tests, -test_positivity) %>% 
+dat_tidy <-
+  dat %>%
+  select(-date, -tests, -test_positivity) %>%
   pivot_longer(-time)
 
 time_interval_in_days <- as.numeric(dat$date[2] - dat$date[1])
 
-time_date_key <- 
-  dat %>% 
-  select(time, date) %>% 
-  add_row(., time = 0, date = min(.$date) - time_interval_in_days, .before = 1) 
+time_date_key <-
+  dat %>%
+  select(time, date) %>%
+  add_row(., time = 0, date = min(.$date) - time_interval_in_days, .before = 1)
 
 oc_seroprev_data <- read_csv("data/oc_seroprev_data.csv")
 
@@ -35,7 +36,7 @@ create_draws <- function(file_path) {
 
 tidy_generated_quantities <- function(generated_quantities_draws) {
   generated_quantities_draws %>%
-    select(-lp) %>% 
+    select(-lp) %>%
     pivot_longer(-starts_with(".")) %>%
     group_by(name) %>%
     median_qi(.width = ci_widths) %>%
@@ -49,15 +50,15 @@ tidy_generated_quantities <- function(generated_quantities_draws) {
     mutate(time = case_when(
       name %in% c("α_t", "cases_bb_mean", "cases_nb_mean", "cases_mean", "deaths_mean") ~ index,
       name == "seroprev_mean" ~ as.integer(oc_seroprev_data$time),
-      TRUE ~ index - 1L)) %>% 
-    left_join(time_date_key) %>% 
-    select(name, date, value, starts_with(".")) %>% 
+      TRUE ~ index - 1L)) %>%
+    left_join(time_date_key) %>%
+    select(name, date, value, starts_with(".")) %>%
     arrange(name, date, .width)
 }
 
 tidy_predictive <- function(predictive_draws) {
   predictive_draws %>%
-    pivot_longer(-starts_with(".")) %>% 
+    pivot_longer(-starts_with(".")) %>%
     group_by(name) %>%
     median_qi(.width = ci_widths) %>%
     separate(col = name,
@@ -66,37 +67,37 @@ tidy_predictive <- function(predictive_draws) {
              remove = T,
              fill = "right",
              extra = "drop",
-             convert = T) %>% 
-    mutate(name = str_remove(name, "data_new_|data_")) %>% 
-    mutate(time = if_else(name == "seroprev_cases", as.integer(oc_seroprev_data$time), index)) %>% 
-    left_join(time_date_key) %>% 
-    select(name, date, value, starts_with(".")) %>% 
+             convert = T) %>%
+    mutate(name = str_remove(name, "data_new_|data_")) %>%
+    mutate(time = if_else(name == "seroprev_cases", as.integer(oc_seroprev_data$time), index)) %>%
+    left_join(time_date_key) %>%
+    select(name, date, value, starts_with(".")) %>%
     arrange(name, date, .width)
 }
 
 extract_lp_tbl <- function(generated_quantities_draws) {
-  generated_quantities_draws %>% 
-    select(starts_with("."), lp) %>% 
-    as_tibble() %>% 
+  generated_quantities_draws %>%
+    select(starts_with("."), lp) %>%
+    as_tibble() %>%
     select(-.draw)
 }
 
 compute_diagnostics <- function(generated_quantities_draws) {
   summarize_draws(generated_quantities_draws,
                   rhat, rhat_basic, ess_basic, ess_bulk, ess_tail,
-                  .cores = parallelly::availableCores()) %>% 
+                  .cores = parallelly::availableCores()) %>%
     separate(col = variable,
              into = c("name", "index"),
              sep = "\\[|\\]",
              remove = T,
              fill = "right",
              extra = "drop",
-             convert = T) %>% 
+             convert = T) %>%
     mutate(time = case_when(
       name %in% c("α_t", "cases_bb_mean", "cases_nb_mean", "cases_mean", "deaths_mean") ~ index,
       name == "seroprev_mean" ~ as.integer(oc_seroprev_data$time),
-      TRUE ~ index - 1L)) %>% 
-    left_join(time_date_key) %>% 
+      TRUE ~ index - 1L)) %>%
+    left_join(time_date_key) %>%
     select(name, date, everything(), -index, -time)
 }
 
@@ -107,31 +108,31 @@ score_with_override <- function (data, metrics = NULL, override = NULL, ...) {
   forecast_unit <- check_data$forecast_unit
   target_type <- check_data$target_type
   metrics <- scoringutils:::check_metrics(metrics)
-  
+
   if (!is.null(override)) {
     prediction_type <- override
     target_type <- override
   }
-  
+
   if (target_type == "binary") {
-    scores <- scoringutils:::score_binary(data = data, forecast_unit = forecast_unit, 
+    scores <- scoringutils:::score_binary(data = data, forecast_unit = forecast_unit,
                                           metrics = metrics)
   }
   if (prediction_type == "quantile") {
-    scores <- scoringutils:::score_quantile(data = data, forecast_unit = forecast_unit, 
+    scores <- scoringutils:::score_quantile(data = data, forecast_unit = forecast_unit,
                                             metrics = metrics, ...)
   }
-  if (prediction_type %in% c("integer", "continuous") && (target_type != 
+  if (prediction_type %in% c("integer", "continuous") && (target_type !=
                                                           "binary")) {
-    scores <- scoringutils:::score_sample(data = data, forecast_unit = forecast_unit, 
+    scores <- scoringutils:::score_sample(data = data, forecast_unit = forecast_unit,
                                           metrics = metrics, prediction_type = prediction_type)
   }
   return(scores)
 }
 
 score_predictions <- function(predictive_draws) {
-  predictive_draws %>% 
-    pivot_longer(-starts_with(".")) %>% 
+  predictive_draws %>%
+    pivot_longer(-starts_with(".")) %>%
     group_by(name) %>%
     separate(col = name,
              into = c("name", "index"),
@@ -139,47 +140,47 @@ score_predictions <- function(predictive_draws) {
              remove = T,
              fill = "right",
              extra = "drop",
-             convert = T) %>% 
-    mutate(name = str_remove(name, "data_new_|data_")) %>% 
-    mutate(time = if_else(name == "seroprev_cases", as.integer(oc_seroprev_data$time), index)) %>% 
-    select(sample = .draw, prediction = value, name, time) %>% 
-    mutate(weeks_ahead = time - target_max_t) %>% 
-    filter(weeks_ahead > 0) %>% 
-    left_join(dat_tidy %>% 
-                rename(true_value = value)) %>% 
-    left_join(time_date_key) %>% 
-    mutate(model = target_model_design) %>% 
-    select(date, target_type = name, model, weeks_ahead, prediction, sample, true_value) %>% 
+             convert = T) %>%
+    mutate(name = str_remove(name, "data_new_|data_")) %>%
+    mutate(time = if_else(name == "seroprev_cases", as.integer(oc_seroprev_data$time), index)) %>%
+    select(sample = .draw, prediction = value, name, time) %>%
+    mutate(weeks_ahead = time - target_max_t) %>%
+    filter(weeks_ahead > 0) %>%
+    left_join(dat_tidy %>%
+                rename(true_value = value)) %>%
+    left_join(time_date_key) %>%
+    mutate(model = target_model_design) %>%
+    select(date, target_type = name, model, weeks_ahead, prediction, sample, true_value) %>%
     score_with_override(override = "continuous")
 }
 
 model_info <-
-  read_csv("model_table.csv") %>% 
-  distinct(model_design) %>% 
+  read_csv("model_table.csv") %>%
+  distinct(model_design) %>%
   left_join(
-    tibble(posterior_generated_quantities_file_path = dir_ls("results/posterior_generated_quantities/")) %>% 
-      mutate(model_design = posterior_generated_quantities_file_path %>% 
-               str_extract("(?<=model_design=)\\d+") %>% 
+    tibble(posterior_generated_quantities_file_path = dir_ls("results/posterior_generated_quantities/")) %>%
+      mutate(model_design = posterior_generated_quantities_file_path %>%
+               str_extract("(?<=model_design=)\\d+") %>%
                as.integer())
   ) %>%
   left_join(
-    tibble(prior_generated_quantities_file_path = dir_ls("results/prior_generated_quantities/")) %>% 
-      mutate(model_design = prior_generated_quantities_file_path %>% 
-               str_extract("(?<=model_design=)\\d+") %>% 
+    tibble(prior_generated_quantities_file_path = dir_ls("results/prior_generated_quantities/")) %>%
+      mutate(model_design = prior_generated_quantities_file_path %>%
+               str_extract("(?<=model_design=)\\d+") %>%
                as.integer())
   ) %>%
   left_join(
-    tibble(posterior_predictive_file_path = dir_ls("results/posterior_predictive/")) %>% 
-      mutate(model_design = posterior_predictive_file_path %>% 
-               str_extract("(?<=model_design=)\\d+") %>% 
+    tibble(posterior_predictive_file_path = dir_ls("results/posterior_predictive/")) %>%
+      mutate(model_design = posterior_predictive_file_path %>%
+               str_extract("(?<=model_design=)\\d+") %>%
                as.integer())
   ) %>%
   left_join(
-    tibble(prior_predictive_file_path = dir_ls("results/prior_predictive/")) %>% 
-      mutate(model_design = prior_predictive_file_path %>% 
-               str_extract("(?<=model_design=)\\d+") %>% 
+    tibble(prior_predictive_file_path = dir_ls("results/prior_predictive/")) %>%
+      mutate(model_design = prior_predictive_file_path %>%
+               str_extract("(?<=model_design=)\\d+") %>%
                as.integer())
-  ) %>% 
+  ) %>%
   filter(model_design == target_model_design)
 
 prior_generated_quantities_file_path <- model_info$prior_generated_quantities_file_path

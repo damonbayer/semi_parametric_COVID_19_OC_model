@@ -1,3 +1,4 @@
+# Generate posterior predictive and posterior generated quantities for models fit to simulated data
 sim_id = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 
 using Revise

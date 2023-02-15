@@ -1,3 +1,4 @@
+# main model code
 prob = ODEProblem{true}(seirdc_log_ode!,
   zeros(6),
   (0.0, obstimes[end]),

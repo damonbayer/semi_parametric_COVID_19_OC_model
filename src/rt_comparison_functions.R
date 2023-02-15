@@ -1,3 +1,5 @@
+# Description: Functions for comparing Rt estimates from different models
+# Author: Isaac Goldstein
 library(tidyverse)
 library(EpiEstim)
 library(tidybayes)

@@ -1,3 +1,4 @@
+# Illustrate relationship between GMRF prior and corresponding time-varying function
 library(tidyverse)
 library(latex2exp)
 source("src/plot_functions.R")

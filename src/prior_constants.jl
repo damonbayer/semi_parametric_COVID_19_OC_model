@@ -1,3 +1,4 @@
+# Constants for prior distributions
 ## Cases
 if use_tests
   const σ_α_non_centered_mean = -2.7

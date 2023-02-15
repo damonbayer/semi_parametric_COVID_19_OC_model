@@ -1,3 +1,4 @@
+# Run Rt_estim and epidemia on simulated data
 library(tidyverse)
 library(fs)
 target_sim_id <- ifelse(length(commandArgs(trailingOnly = TRUE)) == 0, 1, as.integer(commandArgs(trailingOnly = TRUE[1])))

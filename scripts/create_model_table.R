@@ -1,3 +1,4 @@
+# Setup design for all models fit in paper
 library(tidyverse)
 model_table <-
   bind_rows(

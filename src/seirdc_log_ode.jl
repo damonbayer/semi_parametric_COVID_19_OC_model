@@ -1,13 +1,14 @@
+# ODE for SEIRDC model with log-transformed variables
 function seirdc_log_ode!(du, u, p, t)
     (S, E, I, R, D, C) = exp.(u)
     (β, γ, ν, IFR) = p
     N = S + E + I + R + D
-  
+
     infection = β * I * S / N
     progression = γ * E
     recovery = ν * (1 - IFR) * I
     death = ν * IFR * I
-  
+
     @inbounds begin
         du[1] = -infection / S # S
         du[2] = (infection - progression) / E # E

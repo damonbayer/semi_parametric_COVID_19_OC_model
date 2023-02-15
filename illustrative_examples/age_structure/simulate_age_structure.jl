@@ -1,3 +1,4 @@
+# Simulate data where infecitons have age structure and fit model without age structure
 using DifferentialEquations
 using LinearAlgebra
 using Turing

@@ -1,3 +1,4 @@
+# Illustrate how n week ahead forecast plot should be read
 library(gridExtra)
 library(tidyverse)
 library(tidybayes)
@@ -7,40 +8,40 @@ library(latex2exp)
 library(cowplot)
 source("src/plot_functions.R")
 
-dat <- 
-  read_csv("data/oc_data.csv") %>% 
-  mutate(index = 1:n()) %>% 
-  rename(date = end_date) %>% 
+dat <-
+  read_csv("data/oc_data.csv") %>%
+  mutate(index = 1:n()) %>%
+  rename(date = end_date) %>%
   select(-start_date)
 
-index_date_conversion <- 
-  dat %>% 
+index_date_conversion <-
+  dat %>%
   select(index, date)
 
 dat_tidy <-
-  dat %>% 
-  select(date, cases, tests, deaths) %>% 
-  mutate(test_positivity = cases / tests) %>% 
-  select(-tests) %>% 
+  dat %>%
+  select(date, cases, tests, deaths) %>%
+  mutate(test_positivity = cases / tests) %>%
+  select(-tests) %>%
   pivot_longer(-date)
 
 model_table <-
-  read_csv("model_table.csv") %>% 
-  select(-model_id, -seed) %>% 
+  read_csv("model_table.csv") %>%
+  select(-model_id, -seed) %>%
   distinct()
 
-all_pp <- 
-  tibble(full_path = dir_ls("results/tidy_posterior_predictive")) %>% 
-  mutate(model_design = full_path %>% 
-           str_extract("(?<=model_design=)\\d+") %>% 
-           as.integer()) %>% 
-  left_join(model_table) %>% 
-  mutate(pp_data = map(full_path, read_csv)) %>% 
-  select(-full_path) %>% 
+all_pp <-
+  tibble(full_path = dir_ls("results/tidy_posterior_predictive")) %>%
+  mutate(model_design = full_path %>%
+           str_extract("(?<=model_design=)\\d+") %>%
+           as.integer()) %>%
+  left_join(model_table) %>%
+  mutate(pp_data = map(full_path, read_csv)) %>%
+  select(-full_path) %>%
   arrange(model_design)
 
-main_pp <- 
-  all_pp %>% 
+main_pp <-
+  all_pp %>%
   filter(max_t == 42,
          constant_alpha == F,
          constant_IFR == F,
@@ -50,46 +51,46 @@ main_pp <-
          half_R0_0 == F,
          half_S_0 == F,
          use_seroprev == T,
-         use_tests == T) %>% 
-  unnest(pp_data) %>% 
+         use_tests == T) %>%
+  unnest(pp_data) %>%
   select(date, name, value, starts_with(".")) %>%
   mutate(forecast = date >= date %>% unique() %>% sort() %>% tail(4) %>% head(1))
 
-first_forecast_date <- 
-  main_pp %>% 
-  filter(forecast) %>% 
-  pull(date) %>% 
+first_forecast_date <-
+  main_pp %>%
+  filter(forecast) %>%
+  pull(date) %>%
   min()
 
-last_forecast_date <- 
-  main_pp %>% 
-  filter(forecast) %>% 
-  pull(date) %>% 
+last_forecast_date <-
+  main_pp %>%
+  filter(forecast) %>%
+  pull(date) %>%
   max()
 
-last_modeling_date <- 
-  main_pp %>% 
-  filter(!forecast) %>% 
-  pull(date) %>% 
+last_modeling_date <-
+  main_pp %>%
+  filter(!forecast) %>%
+  pull(date) %>%
   max()
 
 
-first_modeling_date <- 
-  main_pp %>% 
-  filter(!forecast) %>% 
-  pull(date) %>% 
+first_modeling_date <-
+  main_pp %>%
+  filter(!forecast) %>%
+  pull(date) %>%
   min()
 
-how_to_read_forecast_forecast_plot <- 
+how_to_read_forecast_forecast_plot <-
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = main_pp %>% 
+  geom_lineribbon(data = main_pp %>%
                     filter(name == "deaths"),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   step = "mid",
                   color = brewer_line_color,
                   key_glyph = "rect") +
-  geom_point(data = dat_tidy %>% 
-               filter(name == "deaths") %>% 
+  geom_point(data = dat_tidy %>%
+               filter(name == "deaths") %>%
                filter(date <= last_forecast_date)) +
   scale_x_date(name = "Date", limits = c(first_modeling_date, last_forecast_date)) +
   scale_y_continuous(name = "Deaths", labels = comma) +
@@ -97,16 +98,16 @@ how_to_read_forecast_forecast_plot <-
   theme(legend.position = "none") +
   ggtitle("Posterior Deaths Forecast")
 
-how_to_read_forecast_fit_plot <- 
+how_to_read_forecast_fit_plot <-
   ggplot(mapping = aes(date, value)) +
-  geom_lineribbon(data = main_pp %>% 
-                    filter(name == "deaths") %>% 
+  geom_lineribbon(data = main_pp %>%
+                    filter(name == "deaths") %>%
                     filter(date <= last_modeling_date),
                   mapping = aes(ymin = .lower, ymax = .upper),
                   step = "mid",
                   key_glyph = "rect") +
-  geom_point(data = dat_tidy %>% 
-               filter(name == "deaths") %>% 
+  geom_point(data = dat_tidy %>%
+               filter(name == "deaths") %>%
                filter(date <= last_forecast_date)) +
   scale_x_date(name = "Date", limits = c(first_modeling_date, last_forecast_date)) +
   scale_y_continuous(name = "Deaths", labels = comma) +

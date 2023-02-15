@@ -1,3 +1,4 @@
+# Load OC data and create data for various models
 if !@isdefined(max_t)
     error("Must define max_t before loading data")
 end

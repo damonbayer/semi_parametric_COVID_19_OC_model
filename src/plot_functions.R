@@ -1,3 +1,4 @@
+# Convenience functions for making manuscript plots
 library(ggplot2)
 library(cowplot)
 library(scales)
@@ -24,7 +25,7 @@ my_theme <- list(
 
 brewer_line_color <- "#08519c"
 
-my_labeller <- 
+my_labeller <-
   c("cases_bb_mean" = "Cases BB Mean",
     "cases_mean" = "Cases Mean",
     "cases_nb_mean" = "Cases NB Mean",

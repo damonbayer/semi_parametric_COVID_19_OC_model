@@ -1,10 +1,11 @@
+# Create a Latex string for a table entry for a given distribution
 library(tidyverse)
 library(scales)
 expit <- function(x)  1/(1+exp(-x))
 logit <- function(x) -log(1/x - 1)
 
 format_for_table <- function(dist_type = "log", dist_mean, dist_sd, interval_width = 0.95) {
-  tail_width <- (1 - interval_width) / 2 
+  tail_width <- (1 - interval_width) / 2
   raw_quantiles <- qnorm(p = c(0.5, tail_width, 1 - tail_width), mean = dist_mean, sd = dist_sd)
   if (dist_type == "log") {
     trans_quantiles <- exp(raw_quantiles)
@@ -24,13 +25,13 @@ format_for_table <- function(dist_type = "log", dist_mean, dist_sd, interval_wid
     rounded_dist_var,
     ")",
     " & ",
-    "\\makecell{", 
-    rounded_quantiles[1], 
-    " \\\\ (", 
+    "\\makecell{",
+    rounded_quantiles[1],
+    " \\\\ (",
     rounded_quantiles[2],
     ", ",
     rounded_quantiles[3],
-    ")}") %>% 
+    ")}") %>%
     cat()
 }
 

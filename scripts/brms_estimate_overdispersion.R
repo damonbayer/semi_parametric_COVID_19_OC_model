@@ -1,10 +1,11 @@
+# Use BRMS to estimate overdipsersion priors for deaths and cases
 library(tidyverse)
 library(brms)
 library(tidybayes)
 library(bayesplot)
 
 options(mc.cores = parallel::detectCores())
-dat <- read_csv("data/oc_data.csv") %>% 
+dat <- read_csv("data/oc_data.csv") %>%
   filter(time <= 42)
 
 desired_quantiles <- c(0.05, 0.5, 0.95)
@@ -61,7 +62,7 @@ posterior_predict_beta_binomial2 <- function(i, prep, ...) {
 stanvars <- stanvar(scode = stan_funs, block = "functions")
 
 cases_model_bb <- brm(
-  cases | vint(tests) ~ s(time), data = dat, 
+  cases | vint(tests) ~ s(time), data = dat,
   family = beta_binomial2, stanvars = stanvars,
   cores = 4,
   seed = 18,
@@ -119,35 +120,35 @@ tibble(desired = quantile(cases_model_nb_shape_draws, desired_quantiles),
 
 
 # Plot Posterior Predictive -----------------------------------------------
-predicted_draws <- 
-  predicted_draws(deaths_model_nb, dat, value = "deaths_nb") %>% 
-  left_join(predicted_draws(cases_model_bb, dat, value = "cases_bb")) %>% 
-  left_join(predicted_draws(cases_model_nb, dat, value = "cases_nb")) %>% 
-  ungroup() %>% 
-  mutate(across(starts_with("cases"), ~{. / tests})) %>% 
-  rename_all(~str_replace(., "cases", "pos")) %>% 
+predicted_draws <-
+  predicted_draws(deaths_model_nb, dat, value = "deaths_nb") %>%
+  left_join(predicted_draws(cases_model_bb, dat, value = "cases_bb")) %>%
+  left_join(predicted_draws(cases_model_nb, dat, value = "cases_nb")) %>%
+  ungroup() %>%
+  mutate(across(starts_with("cases"), ~{. / tests})) %>%
+  rename_all(~str_replace(., "cases", "pos")) %>%
   select(date = end_date, starts_with("pos"), starts_with("deaths"))
 
 
-predicted_draws_data <- 
-  predicted_draws %>% 
-  select(-contains("_")) %>% 
-  distinct() %>% 
+predicted_draws_data <-
+  predicted_draws %>%
+  select(-contains("_")) %>%
+  distinct() %>%
   mutate(pos_nb = pos,
          pos_bb = pos,
-         deaths_nb = deaths) %>% 
-  select(-pos, -deaths) %>% 
+         deaths_nb = deaths) %>%
+  select(-pos, -deaths) %>%
   pivot_longer(-date,
                names_to = c("data", "model"),
                names_sep = "_")
 
-predicted_draws_intervals <- 
-  predicted_draws %>% 
-  select(date, contains("_")) %>% 
+predicted_draws_intervals <-
+  predicted_draws %>%
+  select(date, contains("_")) %>%
   pivot_longer(-date,
                names_to = c("data", "model"),
-               names_sep = "_") %>% 
-  group_by(date, data, model) %>% 
+               names_sep = "_") %>%
+  group_by(date, data, model) %>%
   median_qi(.width = c(0.5, 0.8, 0.95))
 
 ggplot(mapping = aes(date, value)) +
@@ -169,5 +170,5 @@ c(str_c("const ϕ_cases_nb_non_centered_mean = ", cases_model_nb_mean),
   str_c("const ϕ_cases_bb_non_centered_mean = ", cases_model_bb_mean),
   str_c("const ϕ_cases_bb_non_centered_sd = ", cases_model_bb_sd),
   str_c("const ϕ_deaths_non_centered_mean = ", deaths_model_nb_mean),
-  str_c("const ϕ_deaths_non_centered_sd = ", deaths_model_nb_sd)) %>% 
+  str_c("const ϕ_deaths_non_centered_sd = ", deaths_model_nb_sd)) %>%
   write_lines("src/prior_constants_overdispersion.jl")

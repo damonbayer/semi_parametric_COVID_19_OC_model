@@ -1,3 +1,4 @@
+# Simulate data to look like OC data
 seed = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 model_design = 46
 

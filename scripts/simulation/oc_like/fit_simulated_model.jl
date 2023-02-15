@@ -1,3 +1,4 @@
+# Fit model to similated data for a given sim_id
 sim_id = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
 
 using Revise
