@@ -58,7 +58,7 @@ generated_quantities_simulation_scalar_shrinkage_plot <-
   geom_vline(xintercept = 0, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Shrinkage", labels = percent) +
-  ggtitle("Posterior Shrinkage Properties of Time-Stationary Parameters",
+  ggtitle("Posterior Shrinkage Properties of Scalar Parameters",
           subtitle = "Median and 95% Interval from 200 simulations"
   ) +
   my_theme
@@ -116,7 +116,7 @@ generated_quantities_simulation_scalar_coverage_plot <-
   geom_vline(xintercept = 0.8, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Coverage", labels = percent) +
-  ggtitle("Posterior Coverage Properties of Time-Stationary Parameters",
+  ggtitle("Posterior Coverage Properties of Scalar Parameters",
           subtitle = "Mean and 95% Confidence Interval from 200 Simulations"
   ) +
   my_theme
@@ -141,5 +141,6 @@ c(
 ) |>
   walk(~ save_plot(
     filename = path(figures_dir, ., ext = "pdf"),
-    plot = get(.)
+    plot = get(.),
+    base_asp = 1.75
   ))

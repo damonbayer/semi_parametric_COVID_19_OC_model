@@ -37,7 +37,7 @@ posterior_diagnostics %>%
   kable(
     format = "latex",
     escape = F,
-    caption = "Convergence diagnostics for time-stationary parameters for the main model fit to the Orange County data set.",
+    caption = "Convergence diagnostics for scalar parameters for the main model fit to the Orange County data set.",
     booktabs = T,
     digits = 2,
     label = "univariate_diagnostics"
@@ -53,7 +53,7 @@ posterior_diagnostics %>%
   summarize(across(where(is.numeric), list(min = min,  avg = mean, max = max), .names = "{str_to_title(.fn)}. {.col}")) %>%
   kable(format = "latex",
         escape = F,
-        caption = "Convergence diagnostics for time-varying parameters for the main model fit to the Orange County data set.",
+        caption = "Convergence diagnostics for scalar parameters for the main model fit to the Orange County data set.",
         booktabs = T,
         digits = 2,
         label = "multivariate_diagnostics") %>%

@@ -3,16 +3,16 @@ library(tidybayes)
 library(scales)
 source("src/plot_functions.R")
 
-dat <- 
-  read_csv("illustrative_examples/age_structure/data/data.csv") %>% 
+dat <-
+  read_csv("illustrative_examples/age_structure/data/data.csv") %>%
   pivot_longer(-time)
 
-true_generated_quantities <- 
-  read_csv("illustrative_examples/age_structure/data/true_generated_quantities.csv") %>% 
-  pivot_longer(-time, values_drop_na = TRUE) %>% 
-  add_count(name) %>% 
-  mutate(time = if_else(n == 1, NA_real_, time)) %>% 
-  select(-n) %>% 
+true_generated_quantities <-
+  read_csv("illustrative_examples/age_structure/data/true_generated_quantities.csv") %>%
+  pivot_longer(-time, values_drop_na = TRUE) %>%
+  add_count(name) %>%
+  mutate(time = if_else(n == 1, NA_real_, time)) %>%
+  select(-n) %>%
   mutate(
     population = if_else(
       str_ends(name, "_(o|y|total)"),
@@ -22,46 +22,46 @@ true_generated_quantities <-
       str_ends(name, "_(o|y|total)"),
       str_extract(name, ".*(?=_)"),
       name
-    )) %>% 
+    )) %>%
   mutate(population = population %>%
-           fct_relevel("y", "o", "total") %>% 
+           fct_relevel("y", "o", "total") %>%
            fct_recode(
              general = "y",
              vulnerable = "o",
              combined = "total"))
 
 read_predictive <- function(predictive_file_path) {
-  read_csv(predictive_file_path) %>% 
-    pivot_longer(-c(iteration, chain), names_to = "name_raw") %>% 
-    mutate(name = 
+  read_csv(predictive_file_path) %>%
+    pivot_longer(-c(iteration, chain), names_to = "name_raw") %>%
+    mutate(name =
              if_else(
-               str_detect(name_raw, "\\[\\d+\\]"), 
+               str_detect(name_raw, "\\[\\d+\\]"),
                str_extract(name_raw, ".+(?=\\[)"),
                name_raw),
-           time = name_raw %>% 
-             str_extract("(?<=\\[)\\d+(?=\\])") %>% 
-             as.integer()) %>% 
-    mutate(name = str_remove(name, "new_")) %>% 
-    select(name, time, value) %>% 
-    group_by(name, time) %>% 
-    median_qi(.width = c(0.5, 0.8, 0.95)) %>% 
+           time = name_raw %>%
+             str_extract("(?<=\\[)\\d+(?=\\])") %>%
+             as.integer()) %>%
+    mutate(name = str_remove(name, "new_")) %>%
+    select(name, time, value) %>%
+    group_by(name, time) %>%
+    median_qi(.width = c(0.5, 0.8, 0.95)) %>%
     mutate(name = str_remove(name, "data_"))
 }
 
 read_generated_quantities <- function(generated_quantities_file_path) {
   read_csv(generated_quantities_file_path) %>%
-    pivot_longer(-c(iteration, chain), names_to = "name_raw") %>% 
-    mutate(name = 
+    pivot_longer(-c(iteration, chain), names_to = "name_raw") %>%
+    mutate(name =
              if_else(
-               str_detect(name_raw, "\\[\\d+\\]"), 
+               str_detect(name_raw, "\\[\\d+\\]"),
                str_extract(name_raw, ".+(?=\\[)"),
                name_raw),
-           time = name_raw %>% 
-             str_extract("(?<=\\[)\\d+(?=\\])") %>% 
-             as.integer()) %>% 
-    mutate(time = if_else(name %in% c("cases_mean", "deaths_mean"), time, time - 1L)) %>% 
-    select(name, time, value) %>% 
-    group_by(name, time) %>% 
+           time = name_raw %>%
+             str_extract("(?<=\\[)\\d+(?=\\])") %>%
+             as.integer()) %>%
+    mutate(time = if_else(name %in% c("cases_mean", "deaths_mean"), time, time - 1L)) %>%
+    select(name, time, value) %>%
+    group_by(name, time) %>%
     median_qi(.width = c(0.5, 0.8, 0.95))
 }
 
@@ -71,13 +71,13 @@ posterior_predictive <- read_predictive("illustrative_examples/age_structure/dat
 prior_generated_quantities <- read_generated_quantities("illustrative_examples/age_structure/data/prior_generated_quantities.csv")
 posterior_generated_quantities <- read_generated_quantities("illustrative_examples/age_structure/data/posterior_generated_quantities.csv")
 
-all_generated_quantities <- 
+all_generated_quantities <-
   bind_rows(mutate(prior_generated_quantities, distribution = "prior"),
-            mutate(posterior_generated_quantities, distribution = "posterior")) %>% 
+            mutate(posterior_generated_quantities, distribution = "posterior")) %>%
   arrange(name, time, distribution)
 
-true_generated_quantities %>% 
-  filter(!is.na(population)) %>% 
+true_generated_quantities %>%
+  filter(!is.na(population)) %>%
   ggplot(aes(time, value, color = population)) +
   facet_wrap(~name, scales = "free_y") +
   geom_line() +
@@ -88,7 +88,7 @@ data_ifr_age_structure_plot <-
   facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()), ncol = 1) +
   geom_line(mapping = aes(color = population),
             data = true_generated_quantities %>%
-              filter(str_starts(name, "latent_")) %>% 
+              filter(str_starts(name, "latent_")) %>%
               mutate(name = str_remove(name, "latent_"))) +
   geom_point(data = dat) +
   scale_y_continuous(name = "Count", labels = comma) +
@@ -97,7 +97,7 @@ data_ifr_age_structure_plot <-
   ggtitle("Latent and Observed Cases and Deaths") +
   theme(legend.position = "bottom")
 
-posterior_predictive_ifr_age_structure_plot <- 
+posterior_predictive_ifr_age_structure_plot <-
   ggplot(mapping = aes(time, value)) +
   facet_wrap(. ~ name, scale = "free_y", labeller = as_labeller(. %>% str_replace("_", " ") %>% str_to_title()),
              nrow = 2) +
@@ -109,21 +109,21 @@ posterior_predictive_ifr_age_structure_plot <-
   scale_y_continuous(name = "Count", labels = comma) +
   scale_x_continuous(name = "Time") +
   ggtitle("Posterior Predictive for Structured Population",
-          "Modelled as Unstructured Population") +
+          "Modeled as Unstructured Population") +
   my_theme
 
-ifr_age_structure_generated_quantities_simulation_compartment_plot <- 
+ifr_age_structure_generated_quantities_simulation_compartment_plot <-
   ggplot(mapping = aes(time, value)) +
   facet_wrap(~name, scales = "free_y") +
   geom_lineribbon(mapping = aes(ymin = .lower, ymax =.upper, color = distribution, fill = distribution),
-                  data = all_generated_quantities %>% 
-                    filter(.width == 0.8) %>% 
-                    filter(name %in% c("S", "E", "I", "R", "D")) %>% 
+                  data = all_generated_quantities %>%
+                    filter(.width == 0.8) %>%
+                    filter(name %in% c("S", "E", "I", "R", "D")) %>%
                     mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
                   alpha = 0.5) +
-  geom_line(data = true_generated_quantities %>% 
+  geom_line(data = true_generated_quantities %>%
               filter(name %in% c("S", "E", "I", "R", "D"),
-                     population == "combined") %>% 
+                     population == "combined") %>%
               mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))),
             linetype = "dashed") +
   scale_x_continuous(name = "Time") +
@@ -131,25 +131,25 @@ ifr_age_structure_generated_quantities_simulation_compartment_plot <-
   scale_color_discrete(name = "Distribution", label = str_to_title) +
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Compartments",
-          "Structured Population Modelled as Unstructured Population,\n80% credible intervals, true values in black") +
+          "Structured Population Modeled as Unstructured Population,\n80% credible intervals, true values in black") +
   theme(legend.position = c(5/6, 1/4))
 
 
-ifr_age_structure_generated_quantities_simulation_time_varying_plot <- 
+ifr_age_structure_generated_quantities_simulation_time_varying_plot <-
   ggplot(mapping = aes(time, value)) +
   facet_wrap(~name, scales = "free_y", labeller = my_labeller_fn, ncol = 1) +
   geom_lineribbon(mapping = aes(ymin = .lower, ymax =.upper, color = distribution, fill = distribution),
-                  data = all_generated_quantities %>% 
-                    filter(.width == 0.8) %>% 
+                  data = all_generated_quantities %>%
+                    filter(.width == 0.8) %>%
                     filter(name %in% c("IFR_t", "Rₜ_t")),
                   alpha = 0.5,
                   step = "hv") +
-  geom_step(data = true_generated_quantities %>% 
+  geom_step(data = true_generated_quantities %>%
               filter(name %in% c("IFR_t", "Rₜ_t"),
                      time <= all_generated_quantities %>%
                        filter(.width == 0.8) %>%
-                       filter(name %in% c("IFR_t", "Rₜ_t")) %>% 
-                       pull(time) %>% 
+                       filter(name %in% c("IFR_t", "Rₜ_t")) %>%
+                       pull(time) %>%
                        max()),
             linetype = "dashed") +
   scale_x_continuous(name = "Time") +
@@ -157,10 +157,10 @@ ifr_age_structure_generated_quantities_simulation_time_varying_plot <-
   scale_color_discrete(name = "Distribution", label = str_to_title) +
   scale_fill_discrete(name = "Distribution", label = str_to_title) +
   ggtitle("Prior and Posterior Credible Intervals for Time-Varying Parameters",
-          "Structured Population Modelled as Unstructured Population,\n80% credible intervals, true values in black") +
+          "Structured Population Modeled as Unstructured Population,\n80% credible intervals, true values in black") +
   theme(legend.position = "bottom")
 
-ifr_age_structure_generated_quantities_simulation_scalar_plot <- 
+ifr_age_structure_generated_quantities_simulation_scalar_plot <-
   ggplot() +
   facet_wrap(~name, scales = "free_x",
              labeller = my_labeller_fn) +
@@ -174,8 +174,8 @@ ifr_age_structure_generated_quantities_simulation_scalar_plot <-
   scale_y_discrete(name = "Distribution", labels = str_to_title) +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
-  ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters",
-          subtitle = "Structured Population Modelled as Unstructured Population,\n50%, 80%, 95% credible intervals, true values in black") +
+  ggtitle("Prior and Posterior Credible Intervals for Scalar Parameters",
+          subtitle = "Structured Population Modeled as Unstructured Population,\n50%, 80%, 95% credible intervals, true values in black") +
   theme(legend.position = "none")
 
 

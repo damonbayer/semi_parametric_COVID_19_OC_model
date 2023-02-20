@@ -7,11 +7,11 @@ generated_quantities_coverage_summary <- read_csv("results/generated_quantities_
 
 
 # Time-Varying ------------------------------------------------------------
-gq_simulation_time_varying_shrinkage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(!is.na(time)) %>% 
-  filter(str_ends(name, "_t")) %>% 
+gq_simulation_time_varying_shrinkage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(!is.na(time)) %>%
+  filter(str_ends(name, "_t")) %>%
   ggplot(aes(time, shrinkage, color = name)) +
   geom_line() +
   geom_point() +
@@ -22,11 +22,11 @@ gq_simulation_time_varying_shrinkage_plot <-
   ggtitle("Posterior Shrinkage Properties of Time-Varying Parameters from 200 simulations") +
   my_theme
 
-gq_simulation_time_varying_coverage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(!is.na(time)) %>% 
-  filter(str_ends(name, "_t")) %>% 
+gq_simulation_time_varying_coverage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(!is.na(time)) %>%
+  filter(str_ends(name, "_t")) %>%
   ggplot(aes(time, covered, color = name)) +
   scale_color_discrete(name = "Parameter", labels = my_labeller) +
   geom_line() +
@@ -39,12 +39,12 @@ gq_simulation_time_varying_coverage_plot <-
   theme(legend.position ="none")
 
 # Shrinkage ---------------------------------------------------------------
-gq_simulation_compartment_shrinkage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(!is.na(time)) %>% 
-  filter(name %in% c("S", "E", "I", "R", "D")) %>% 
-  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>% 
+gq_simulation_compartment_shrinkage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(!is.na(time)) %>%
+  filter(name %in% c("S", "E", "I", "R", "D")) %>%
+  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>%
   ggplot(aes(time, shrinkage, color = name)) +
   geom_line() +
   geom_point() +
@@ -55,12 +55,12 @@ gq_simulation_compartment_shrinkage_plot <-
   ggtitle("Posterior Shrinkage Properties of Compatment Sizes from 200 simulations") +
   my_theme
 
-gq_simulation_compartment_coverage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(!is.na(time)) %>% 
-  filter(name %in% c("S", "E", "I", "R", "D")) %>% 
-  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>% 
+gq_simulation_compartment_coverage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(!is.na(time)) %>%
+  filter(name %in% c("S", "E", "I", "R", "D")) %>%
+  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>%
   ggplot(aes(time, covered, color = name)) +
   geom_line() +
   geom_point() +
@@ -74,61 +74,61 @@ gq_simulation_compartment_coverage_plot <-
 
 # Scalar ------------------------------------------------------------------
 
-gq_simulation_scalar_shrinkage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(is.na(time)) %>% 
-  filter(!(name %in%  c("S_SEI", "I_EI"))) %>% 
-  select(-time) %>% 
-  mutate(name = fct_reorder(name, shrinkage)) %>% 
+gq_simulation_scalar_shrinkage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(is.na(time)) %>%
+  filter(!(name %in%  c("S_SEI", "I_EI"))) %>%
+  select(-time) %>%
+  mutate(name = fct_reorder(name, shrinkage)) %>%
   ggplot(aes(shrinkage, name)) +
   geom_point() +
   geom_vline(xintercept = 0, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Shrinkage", labels = percent)  +
   ggtitle("Posterior Shrinkage Properties",
-          subtitle = "Time-stationary parameters, 200 simulations") +
+          subtitle = "Scalar parameters, 200 simulations") +
   my_theme
 
-gq_simulation_scalar_coverage_plot <- 
-  generated_quantities_coverage_summary %>% 
-  select(-ends_with("_error")) %>% 
-  filter(is.na(time)) %>% 
-  filter(!(name %in%  c("S_SEI", "I_EI"))) %>% 
-  select(-time) %>% 
-  mutate(name = fct_reorder(name, covered)) %>% 
+gq_simulation_scalar_coverage_plot <-
+  generated_quantities_coverage_summary %>%
+  select(-ends_with("_error")) %>%
+  filter(is.na(time)) %>%
+  filter(!(name %in%  c("S_SEI", "I_EI"))) %>%
+  select(-time) %>%
+  mutate(name = fct_reorder(name, covered)) %>%
   ggplot(aes(covered, name)) +
   geom_point() +
   geom_vline(xintercept = 0.8, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
   scale_x_continuous(name = "Coverage", labels = percent) +
   ggtitle("Posterior Coverage Properties",
-          subtitle = "Time-stationary parameters, 200 simulations") +
+          subtitle = "Scalar parameters, 200 simulations") +
   my_theme
 
 
 # Save Plots --------------------------------------------------------------
-gq_simulation_compartment_properties_plot <- 
+gq_simulation_compartment_properties_plot <-
   plot_grid(gq_simulation_compartment_coverage_plot, gq_simulation_compartment_shrinkage_plot,
             align = "hv",
             nrow = 2,
             axis = "l")
 
-gq_simulation_time_verying_properties_plot <- 
+gq_simulation_time_varying_properties_plot <-
   plot_grid(gq_simulation_time_varying_coverage_plot, gq_simulation_time_varying_shrinkage_plot,
             align = "hv",
             nrow = 2,
             axis = "l")
 
 
-c("gq_simulation_compartment_properties_plot", "gq_simulation_time_verying_properties_plot") %>% 
+c("gq_simulation_compartment_properties_plot", "gq_simulation_time_varying_properties_plot") %>%
   walk(~save_plot_target_asp(filename = path("figures/advancement_slides", ., ext = "pdf"),
                              plot = get(.),
                              base_height = 6,
                              base_asp = 16/9))
 
 
-c("gq_simulation_scalar_coverage_plot", "gq_simulation_scalar_shrinkage_plot") %>% 
+c("gq_simulation_scalar_coverage_plot", "gq_simulation_scalar_shrinkage_plot") %>%
   walk(~save_plot_target_asp(filename = path("figures/advancement_slides", ., ext = "pdf"),
                              plot = get(.),
                              base_height = 5,

@@ -124,7 +124,7 @@ single_gq_simulation_scalar_plot <-
   scale_y_discrete(name = "Distribution") +
   scale_fill_discrete(name = "Distribution") +
   scale_color_discrete(name = "Distribution") +
-  ggtitle("Prior and Posterior Credible Intervals for Time-Stationary Parameters",
+  ggtitle("Prior and Posterior Credible Intervals for Scalar Parameters",
           subtitle = "One simulated dataset, 80% credible intervals, true values in black") +
   theme(legend.position = "none")
 
