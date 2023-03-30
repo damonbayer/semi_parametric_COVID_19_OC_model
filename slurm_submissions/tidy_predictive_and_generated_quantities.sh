@@ -13,6 +13,6 @@
 
 module purge
 module load R
-cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
+cd //pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 Rscript scripts/tidy_predictive_and_generated_quantities.R $SLURM_ARRAY_TASK_ID

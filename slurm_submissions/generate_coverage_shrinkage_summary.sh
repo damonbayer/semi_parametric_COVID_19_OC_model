@@ -13,6 +13,6 @@
 
 module purge
 module load R
-cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
+cd //pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 Rscript scripts/simulation/oc_like/generate_coverage_shrinkage_summary.R

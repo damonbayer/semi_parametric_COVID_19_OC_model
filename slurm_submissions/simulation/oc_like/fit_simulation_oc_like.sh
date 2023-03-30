@@ -13,6 +13,6 @@
 
 module purge
 module load julia/1.8.5
-cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
+cd //pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 julia --project --threads 4 scripts/simulation/oc_like/fit_simulated_model.jl $SLURM_ARRAY_TASK_ID

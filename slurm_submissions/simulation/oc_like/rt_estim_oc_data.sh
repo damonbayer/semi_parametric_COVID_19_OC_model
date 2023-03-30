@@ -12,6 +12,6 @@
 
 module purge
 module load R
-cd //dfs6/pub/bayerd/semi_parametric_COVID_19_OC_model/
+cd //pub/bayerd/semi_parametric_COVID_19_OC_model/
 
 Rscript scripts/rt_comparison_oc_data.R
