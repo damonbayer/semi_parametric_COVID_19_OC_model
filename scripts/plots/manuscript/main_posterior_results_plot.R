@@ -92,7 +92,7 @@ ifr_t_plot <-
   geom_lineribbon(color = brewer_line_color, step = "hv", key_glyph = "rect") +
   scale_x_date(name = "Date", date_breaks = "3 months", date_labels = "%b %y") +
   scale_y_continuous(name = my_labeller["IFR_t"], limits = c(0, NA)) +
-  ggtitle(TeX("Posterior $\\eta$", bold = T)) +
+  ggtitle(TeX("Posterior IFR", bold = T)) +
   my_theme +
   theme(legend.position = "none")
 

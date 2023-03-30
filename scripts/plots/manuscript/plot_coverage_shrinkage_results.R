@@ -17,9 +17,9 @@ generated_quantities_simulation_time_varying_shrinkage_plot <-
   geom_errorbar() +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_color_discrete(name = "Parameter", labels = my_labeller) +
-  scale_y_continuous(name = "Shrinkage", label = percent) +
+  scale_y_continuous(name = "Contraction", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Shrinkage Properties of Time-Varying Parameters",
+  ggtitle("Posterior Contraction Properties of Time-Varying Parameters",
     subtitle = "Median and 95% Interval from 200 simulations"
   ) +
   my_theme
@@ -37,9 +37,9 @@ generated_quantities_simulation_compartment_shrinkage_plot <-
   geom_errorbar() +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_color_discrete(name = "Compartment", labels = my_labeller) +
-  scale_y_continuous(name = "Shrinkage", label = percent) +
+  scale_y_continuous(name = "Contraction", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Shrinkage Properties of Compatment Sizes",
+  ggtitle("Posterior Contraction Properties of Compatment Sizes",
     subtitle = "Median and 95% Interval from 200 simulations"
   ) +
   my_theme
@@ -57,8 +57,8 @@ generated_quantities_simulation_scalar_shrinkage_plot <-
   geom_errorbar() +
   geom_vline(xintercept = 0, linetype = "dashed") +
   scale_y_discrete(name = "Parameter", labels = my_labeller) +
-  scale_x_continuous(name = "Shrinkage", labels = percent) +
-  ggtitle("Posterior Shrinkage Properties of Scalar Parameters",
+  scale_x_continuous(name = "Contraction", labels = percent) +
+  ggtitle("Posterior Contraction Properties of Scalar Parameters",
           subtitle = "Median and 95% Interval from 200 simulations"
   ) +
   my_theme
