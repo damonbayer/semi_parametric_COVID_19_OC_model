@@ -1,6 +1,7 @@
 # Description: Run Rt_estim and Epidemia on Orange County data
 library(tidyverse)
 library(fs)
+library(EpiEstim)
 source("src/rt_comparison_functions.R")
 oc_data <- read_csv("data/oc_data.csv") %>%
   select(time, total_cases = cases, total_tests = tests) %>%
@@ -142,3 +143,49 @@ summary_rtestimgamma <-
   dplyr::select(time, name, value, .lower, .upper, .width, method)
 
 write_csv(summary_rtestimgamma, path("results", "rt_estim", "rt_comparison_model_id=estimgamma", ext = "csv"))
+
+
+# epiestim ----------------------------------------------------------------
+mean_time = gq$dur_latent_days + gq$dur_infectious_days
+window = 1
+GI_mean = mean_time/7
+GI_var = 2*(GI_mean/2)^2
+  
+ts <- oc_data$time
+ts <- ts[ts > 1 & ts <= (max(ts)-window+1)]
+te <- ts+(window-1)
+  
+  
+estimate_R(
+    incid = oc_data$total_cases,
+    method = "uncertain_si",
+    config = make_config(
+      list(
+        mean_si = GI_mean,
+        min_mean_si = 1,
+        max_mean_si = GI_mean + 1,
+        std_mean_si = 1.5,
+        std_std_si = 1.5,
+        std_si = sqrt(GI_var),
+        min_std_si = sqrt(GI_var)*.8,
+        max_std_si = sqrt(GI_var)*1.2,
+        n1 = 50,
+        n2 = 100, 
+        t_start=ts,
+        t_end=te
+      )
+    )
+  ) -> epiestim_weekly
+  
+epiestim_res <- epiestim_weekly[["R"]] %>%
+    dplyr::select(t_start, 
+                  rt_mean = `Mean(R)`, 
+                  rt_median = `Median(R)`,
+                  rt_CI95l = `Quantile.0.025(R)`,
+                  rt_CI95u = `Quantile.0.975(R)`) %>%
+    mutate(time  = t_start ) 
+  
+  
+ 
+write_csv(epiestim_res, here::here("scripts", "epiestim_oc_rt.csv"))
+
