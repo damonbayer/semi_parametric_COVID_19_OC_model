@@ -22,7 +22,7 @@ full_model_cis <-
   mutate(ci = map(full_path,
                   ~read_csv(.) %>%
                     filter(name == "Rₜ_t",
-                           .width == 0.8))) %>%
+                           .width == 0.95))) %>%
   select(-full_path) %>%
   unnest(ci) %>%
   mutate(method = "full")
@@ -40,7 +40,7 @@ rt_estim_cis <-
   )) %>%
   select(-full_path) %>%
   unnest(ci) %>%
-  filter(.width == 0.8) %>%
+  filter(.width == 0.95) %>%
   mutate(time = time - 1)
 
 epidemia_cis <- tibble(full_path = dir_ls("results/simulation/oc_like/estimnormal")) %>%
@@ -54,7 +54,7 @@ epidemia_cis <- tibble(full_path = dir_ls("results/simulation/oc_like/estimnorma
   )) %>%
   select(-full_path) %>%
   unnest(ci) %>%
-  filter(.width == 0.8) %>%
+  filter(.width == 0.95) %>%
   mutate(time = time - 1)
 
 # ISAAC TO DO: compute metrics --------------------------------------------
@@ -89,10 +89,14 @@ epidemia_metrics <-
   mutate(method = "Epidemia") %>%
   as_tibble()
 
+epiestim_metrics <- read_csv(path("results", "simulation", "oc_like", "epiestim_sim_rt_metrics", ext = "csv")) %>% 
+  mutate(sim_id = as.character(sim_id))
+
 all_metrics <-
   bind_rows(full_model_metrics,
             estimgamma_metrics,
-            epidemia_metrics) %>%
+            epidemia_metrics,
+            epiestim_metrics) %>%
   mutate(method = fct_inorder(method))
 
 write_csv(all_metrics, "results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")

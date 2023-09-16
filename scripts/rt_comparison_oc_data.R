@@ -150,12 +150,11 @@ mean_time = gq$dur_latent_days + gq$dur_infectious_days
 window = 1
 GI_mean = mean_time/7
 GI_var = 2*(GI_mean/2)^2
-  
+
 ts <- oc_data$time
 ts <- ts[ts > 1 & ts <= (max(ts)-window+1)]
 te <- ts+(window-1)
-  
-  
+
 estimate_R(
     incid = oc_data$total_cases,
     method = "uncertain_si",
@@ -170,22 +169,23 @@ estimate_R(
         min_std_si = sqrt(GI_var)*.8,
         max_std_si = sqrt(GI_var)*1.2,
         n1 = 50,
-        n2 = 100, 
+        n2 = 100,
         t_start=ts,
         t_end=te
       )
     )
   ) -> epiestim_weekly
-  
+
 epiestim_res <- epiestim_weekly[["R"]] %>%
-    dplyr::select(t_start, 
-                  rt_mean = `Mean(R)`, 
+    dplyr::select(t_start,
+                  rt_mean = `Mean(R)`,
                   rt_median = `Median(R)`,
                   rt_CI95l = `Quantile.0.025(R)`,
                   rt_CI95u = `Quantile.0.975(R)`) %>%
-    mutate(time  = t_start ) 
-  
-  
- 
-write_csv(epiestim_res, here::here("scripts", "epiestim_oc_rt.csv"))
+    mutate(time  = t_start )
 
+epiestim_res <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/results/rt_estim/rt_comparison_model_id=epiestim.csv")
+estimagamma <- read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv")
+
+
+write_csv(epiestim_res, path("results", "rt_estim", "rt_comparison_model_id=epiestim", ext = "csv"))

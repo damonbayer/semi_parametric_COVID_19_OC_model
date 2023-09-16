@@ -12,7 +12,7 @@ envelope_plot <-
   all_metrics %>%
   ggplot(aes(method, mean_env)) +
   geom_boxplot() +
-  geom_hline(yintercept = 0.8, linetype = "dashed") +
+  geom_hline(yintercept = 0.95, linetype = "dashed") +
   labs(title = "Envelope", x = "Method", y = "Envelope") +
   theme_minimal_grid()
 
