@@ -2,7 +2,10 @@
 library(tidyverse)
 library(fs)
 library(EpiEstim)
+library(EpiNow2)
 source("src/rt_comparison_functions.R")
+options(mc.cores = parallelly::availableCores())
+
 oc_data <- read_csv("data/oc_data.csv") %>%
   select(time, total_cases = cases, total_tests = tests) %>%
   filter(time <= 42)
@@ -185,11 +188,20 @@ epiestim_res <- epiestim_weekly[["R"]] %>%
     mutate(time  = t_start )
 
 
+epiestim_res <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/results/rt_estim/rt_comparison_model_id=epiestim.csv")
+estimagamma <- read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv")
+
+
+write_csv(epiestim_res, path("results", "rt_estim", "rt_comparison_model_id=epiestim", ext = "csv"))
+
+
 # epinow2 -----------------------------------------------------------------
 
 mean_time = (gq$dur_latent_days + gq$dur_infectious_days)/7
 GI_var = 2*(mean_time/2)^2
 data_length <- dim(oc_data)[1]
+mean_delay = gq$dur_latent_days/7
+delay_var = 2*(mean_delay/2)^2
 
 date <- seq(ymd("2020-07-04"), ymd("2020-07-04") + ddays(data_length) -1, by = "days")
 
@@ -198,6 +210,7 @@ epinow2_data <-  data.frame(
   date = date
 )
 
+set.seed(1234)
 epinow2_res <- estimate_infections(
   epinow2_data,
   generation_time = generation_time_opts(mean = mean_time, sd = sqrt(GI_var), mean_sd = 1.5, sd_sd = 1.5, max = 42, fixed = FALSE),
@@ -208,16 +221,31 @@ epinow2_res <- estimate_infections(
   obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
   stan = stan_opts(),
   horizon = 0,
-  CrIs = c(0.5, 0.8, 0.9),
+  CrIs = c(0.5, 0.8, 0.95),
   filter_leading_zeros = TRUE,
   zero_threshold = Inf,
   id = "estimate_infections",
   verbose = interactive())[["summarised"]]
 
-write_csv(epinow2_res, here::here("scripts", "epinow2_oc_rt.csv"))
 
-epiestim_res <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/results/rt_estim/rt_comparison_model_id=epiestim.csv")
-estimagamma <- read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv")
+dplyr::select(time, name, value, .lower, .upper, .width, method)
 
+test = epinow2_res %>% filter(variable == "R") %>% pivot_longer(cols = -date)
+final_format_epinow2_res <- epinow2_res %>%
+                            mutate(time = row_number(),
+                                   method = "EpiNow2") %>%
+                            filter(variable == "R") %>% 
+                            dplyr::select(time, median, method, lower_95:upper_95) %>% 
+                            pivot_longer(cols = -c(time,median, method)) %>%
+                            mutate(.width = str_extract(name, "(\\d)+")) %>% 
+                            type_convert() %>%
+                            mutate(.width = 0.01 * .width,
+                                   new_name = paste0(".",str_extract(name, "[^_]+"))) %>%
+                            dplyr::select(-name) %>% 
+                            group_by(time, median, method, .width) %>%
+                            pivot_wider(names_from = new_name, values_from = value) %>%
+                            mutate(name = "Rt") %>%
+                            rename(value = median) %>% 
+                            dplyr::select(time, name, value, .lower, .upper, .width, method)
 
-write_csv(epiestim_res, path("results", "rt_estim", "rt_comparison_model_id=epiestim", ext = "csv"))
+write_csv(epinow2_res, path("results", "rt_estim", "rt_comparison_model_id=epinow2", ext = "csv"))

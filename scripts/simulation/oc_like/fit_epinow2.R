@@ -82,7 +82,7 @@ for (i in 1:200) {
       obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
       stan = stan_opts(),
       horizon = 0,
-      CrIs = c(0.5, 0.8, 0.9),
+      CrIs = c(0.5, 0.8, 0.95),
       filter_leading_zeros = TRUE,
       zero_threshold = Inf,
       id = "estimate_infections",
@@ -172,7 +172,7 @@ epinow2_rt_metrics <- map(epinow2_intervals, ~.x %>%
   bind_rows(.id = "sim_id") %>% 
   mutate(method = "Epinow2")
 
-write_csv(epinow2_rt_metrics, here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_metrics.csv"))
-write_rds(epinow2_intervals, here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_intervals.rds"))
+write_rds(epinow2_intervals, path("results", "simulation", "oc_like", "epinow2_sim_rt_intervals.rds"))
 
-current_metrics <- read_csv(here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_metrics.csv"))
+
+write_csv(summary_rtestimgamma, path("results", "simulation", "oc_like", "epinow2_sim_rt_metrics", ext = "csv"))
