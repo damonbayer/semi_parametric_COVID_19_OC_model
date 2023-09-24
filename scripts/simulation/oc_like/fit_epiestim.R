@@ -31,16 +31,16 @@ for (i in 1:200) {
     select(time, total_cases = new_cases, tests) %>%
     rename(total_tests = tests)
   # fit epiestim
-  # fit model  
+  # fit model
   window = 1
   GI_mean = mean_time/7
   GI_var = 2*(GI_mean/2)^2
-  
+
   ts <- simulation_data$time
   ts <- ts[ts > 1 & ts <= (max(ts)-window+1)]
   te <- ts+(window-1)
-  
-  
+
+
   estimate_R(
     incid = simulation_data$total_cases,
     method = "uncertain_si",
@@ -55,23 +55,23 @@ for (i in 1:200) {
         min_std_si = sqrt(GI_var)*.8,
         max_std_si = sqrt(GI_var)*1.2,
         n1 = 50,
-        n2 = 100, 
+        n2 = 100,
         t_start=ts,
         t_end=te
       )
     )
   ) -> epiestim_weekly
-  
+
   epiestim_res[[i]] <- epiestim_weekly[["R"]] %>%
-    dplyr::select(t_start, 
-                  rt_mean = `Mean(R)`, 
+    dplyr::select(t_start,
+                  rt_mean = `Mean(R)`,
                   rt_median = `Median(R)`,
                   rt_CI95l = `Quantile.0.025(R)`,
                   rt_CI95u = `Quantile.0.975(R)`) %>%
-    mutate(time  = t_start -1) 
-  
-  
-} 
+    mutate(time  = t_start -1)
+
+
+}
 
 
 # processing metrics ------------------------------------------------------
@@ -91,7 +91,7 @@ rt_metrics <- function(data, value, upper, lower) {
       MCIW = mean(CIW),
       mean_env = mean(envelope)
     )
-  
+
   metrics_two <- data %>%
     mutate(
       prev_val = lag({{ value }}),
@@ -105,9 +105,9 @@ rt_metrics <- function(data, value, upper, lower) {
       MASV = mean(sv),
       true_MASV = mean(rt_sv)
     )
-  
+
   metrics <- cbind(metric_one, metrics_two)
-  
+
   return(metrics)
 }
 
@@ -122,13 +122,13 @@ rt_truth <-
   select(time, Rt = value) %>%
   rename(true_rt = Rt)
 
-epiestim_rt_metrics <- map(epiestim_res, ~.x %>% 
+epiestim_rt_metrics <- map(epiestim_res, ~.x %>%
                                           left_join(rt_truth) %>%
                                   rt_metrics(
                                   rt_median,
                                   rt_CI95u,
                                   rt_CI95l)) %>%
-  bind_rows(.id = "sim_id") %>% 
+  bind_rows(.id = "sim_id") %>%
   mutate(method = "EpiEstim")
 
 write_csv(epiestim_rt_metrics, here::here("scripts", "simulation", "oc_like", "epiestim_sim_rt_metrics.csv"))
