@@ -32,26 +32,6 @@ gq <- read_csv("data/simulation/oc_like/true_generated_quantities.csv")
 # Run Epinow2 -----------------------------------------------
 
 
-epidemia_hypoexp <- function(y, rates) {
-  pmf <- rep(0, y)
-  pmf[1] <- phypoexp(1.5, rates)
-  for (i in 2:y) {
-    pmf[i] <- phypoexp(i + .5, rates) - phypoexp(i - .5, rates)
-  }
-  
-  pmf
-}
-zero_epidemia_gamma <- function(y, alpha, beta) {
-  pmf <- rep(0, (y + 1))
-  pmf[1] <- pgamma(0.5, alpha, rate = beta)
-  for (i in 2:(y + 1)) {
-    pmf[i] <- pgamma(i - 1 + .5, alpha, rate = beta) - pgamma(i - 1 - .5, alpha, rate = beta)
-  }
-  
-  pmf
-}
-
-
 data_length <- dim(simulation_data)[1]
 rates <- c(7 / gq$dur_latent_days, 7 / gq$dur_infectious_days) # pick the generation time
 
@@ -99,7 +79,7 @@ for (i in 1:200) {
       truncation = trunc_opts(),
       rt = rt_opts(prior = list(mean = 1.363283, sd = 0.2705766)),
       gp = gp_opts(),
-      obs = obs_opts(week_effect = FALSE),
+      obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
       stan = stan_opts(),
       horizon = 0,
       CrIs = c(0.5, 0.8, 0.9),
@@ -110,6 +90,25 @@ for (i in 1:200) {
 
 }
 
+rt_truth <-
+  read_csv("data/simulation/oc_like/true_generated_quantities.csv") %>%
+  select(starts_with("Rₜ_t")) %>%
+  pivot_longer(everything(), names_to = "name_raw") %>%
+  mutate(
+    name = name_raw %>% str_extract("^.+(?=\\[\\d+\\])"),
+    time = name_raw %>% str_extract("(?<=\\[)\\d+(?=\\])") %>% as.numeric() %>% `-`(1)
+  ) %>%
+  select(time, Rt = value) %>%
+  rename(true_rt = Rt)
+
+# exploring just one 
+test = epinow2_res[[1]]
+test_intervals = test %>% 
+                 filter(variable == "R") %>% 
+                 dplyr::select(date, median, lower_80, upper_80) %>% 
+                 mutate(time = row_number() - 1) %>% 
+                 left_join(rt_truth, by = "time")
+rt_metrics(test_intervals, median, upper_80, lower_80)
 # grab the 80% credible intervals
 epinow2_intervals <- map(epinow2_res, ~.x %>% filter(variable == "R") %>% 
                                           dplyr::select(date, median, lower_80, upper_80) %>% 
@@ -175,3 +174,5 @@ epinow2_rt_metrics <- map(epinow2_intervals, ~.x %>%
 
 write_csv(epinow2_rt_metrics, here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_metrics.csv"))
 write_rds(epinow2_intervals, here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_intervals.rds"))
+
+current_metrics <- read_csv(here::here("scripts", "simulation", "oc_like", "epinow2_sim_rt_metrics.csv"))
