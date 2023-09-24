@@ -44,18 +44,11 @@ posterior_generated_quantities_path <-
 
 rt_intervals <-
   bind_rows(
-    read_csv("results/rt_estim/rt_comparison_model_id=epiestim.csv") %>% 
-      mutate(time = time - 1,
-             name = "Rt",
-             method = "EpiEstim",
-             .width = 0.95) %>% 
-      select(time, name, value = rt_median, .lower = rt_CI95l, .upper = rt_CI95u, .width, method) %>% 
-      left_join(time_date_key),
     read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv") %>% 
-      mutate(time = time - 1) %>% 
+      # mutate(time = time - 1) %>% 
       left_join(time_date_key),
     read_csv("results/rt_estim/rt_comparison_model_id=estimnormal.csv") %>% 
-      mutate(time = time - 1) %>% 
+      # mutate(time = time - 1) %>% 
       left_join(time_date_key),
     read_csv(posterior_generated_quantities_path) %>%
       filter(name == "Rₜ_t") %>%
@@ -71,17 +64,18 @@ rt_intervals <-
 
 rt_comparison_oc_data_plot <- 
   rt_intervals %>% 
-  filter(method != "Rt-estim-gamma", time > 0) %>% 
-  filter(.width == 0.95) %>% 
+  filter(method != "Rt-estim-gamma") %>% 
+  filter(.width == 0.8) %>% 
   ggplot(aes(x = date, y = value, ymin = .lower, ymax = .upper, fill = method)) +
   geom_lineribbon(alpha = 0.5) +
   scale_y_continuous(name = my_labeller["Rₜ_t"]) +
   ggtitle("Posterior Effective Reproduction Number",
-          subtitle = "95% Credible Intervals") +
+          subtitle = "80% Credible Intervals") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   scale_x_date(name = "Date") +
   scale_fill_discrete(name = "Method", label = str_to_title) +
   theme(legend.position = "bottom")
 
-save_plot(filename = path(figures_dir, "rt_comparison_oc_data_plot", ext = "pdf"),
+
+save_plot_target_asp(filename = path(defense_figures_dir, "rt_comparison_oc_data_plot", ext = "pdf"),
           plot = rt_comparison_oc_data_plot)

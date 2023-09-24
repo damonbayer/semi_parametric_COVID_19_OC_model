@@ -12,7 +12,7 @@ envelope_plot <-
   all_metrics %>%
   ggplot(aes(method, mean_env)) +
   geom_boxplot() +
-  geom_hline(yintercept = 0.95, linetype = "dashed") +
+  geom_hline(yintercept = 0.8, linetype = "dashed") +
   labs(title = "Envelope", x = "Method", y = "Envelope") +
   theme_minimal_grid()
 
@@ -41,5 +41,6 @@ masv_plot <-
 
 rt_comparison_metrics_plot <- plot_grid(envelope_plot, mciw_plot, abs_dev_plot, masv_plot, align = "hv", nrow = 2, ncol = 2)
 
-save_plot(filename = path(figures_dir, "rt_comparison_metrics_plot", ext = "pdf"),
+
+save_plot_target_asp(filename = path(defense_figures_dir, "rt_comparison_metrics_plot", ext = "pdf"),
           plot = rt_comparison_metrics_plot, ncol = 2, nrow = 2)
