@@ -39,8 +39,6 @@ rates <- c(7 / gq$dur_latent_days, 7 / gq$dur_infectious_days) # pick the genera
 date <- seq(ymd("2020-07-04"), ymd("2020-07-04") + ddays(data_length -1), by = "days")
 
 
-generation_pmf = c(0, epidemia_weights <- epidemia_hypoexp(data_length, rates) %>% `/`(., sum(.))) # pick generation distribution
-delay_pmf = delay_weights <- zero_epidemia_gamma(data_length, 1, 7 / gq$dur_latent_days) %>% `/`(., sum(.)) # pick the delay distribution
 mean_time = (gq$dur_latent_days + gq$dur_infectious_days)/7
 GI_var = 2*(mean_time/2)^2
 
@@ -101,17 +99,9 @@ rt_truth <-
   select(time, Rt = value) %>%
   rename(true_rt = Rt)
 
-# exploring just one 
-test = epinow2_res[[1]]
-test_intervals = test %>% 
-                 filter(variable == "R") %>% 
-                 dplyr::select(date, median, lower_80, upper_80) %>% 
-                 mutate(time = row_number() - 1) %>% 
-                 left_join(rt_truth, by = "time")
-rt_metrics(test_intervals, median, upper_80, lower_80)
-# grab the 80% credible intervals
+# grab the 95%% credible intervals
 epinow2_intervals <- map(epinow2_res, ~.x %>% filter(variable == "R") %>% 
-                                          dplyr::select(date, median, lower_80, upper_80) %>% 
+                                          dplyr::select(date, median, lower_95, upper_95) %>% 
                                           mutate(time = row_number() - 1)) 
 
 
@@ -167,12 +157,12 @@ epinow2_rt_metrics <- map(epinow2_intervals, ~.x %>%
                              left_join(rt_truth) %>%
                              rt_metrics(
                                median,
-                               upper_80,
-                               lower_80)) %>%
+                               upper_95,
+                               lower_95)) %>%
   bind_rows(.id = "sim_id") %>% 
   mutate(method = "Epinow2")
 
 write_rds(epinow2_intervals, path("results", "simulation", "oc_like", "epinow2_sim_rt_intervals.rds"))
 
 
-write_csv(summary_rtestimgamma, path("results", "simulation", "oc_like", "epinow2_sim_rt_metrics", ext = "csv"))
+write_csv(epinow2_rt_metrics, path("results", "simulation", "oc_like", "epinow2_sim_rt_metrics", ext = "csv"))
