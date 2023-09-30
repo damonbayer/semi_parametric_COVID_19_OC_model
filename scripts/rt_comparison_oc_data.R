@@ -189,3 +189,37 @@ estimagamma <- read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv"
 
 
 write_csv(epiestim_res, path("results", "rt_estim", "rt_comparison_model_id=epiestim", ext = "csv"))
+
+
+# epinow2 -----------------------------------------------------------------
+
+mean_time = (gq$dur_latent_days + gq$dur_infectious_days)/7
+GI_var = 2*(mean_time/2)^2
+data_length <- dim(oc_data)[1]
+
+date <- seq(ymd("2020-07-04"), ymd("2020-07-04") + ddays(data_length) -1, by = "days")
+
+epinow2_data <-  data.frame(
+  confirm = oc_data$total_cases,
+  date = date
+)
+
+epinow2_res <- estimate_infections(
+  epinow2_data,
+  generation_time = generation_time_opts(mean = mean_time, sd = sqrt(GI_var), mean_sd = 1.5, sd_sd = 1.5, max = 42, fixed = FALSE),
+  delays = delay_opts(list(mean = gq$dur_latent_days/7, sd = sqrt(delay_var), mean_sd = 1.5, sd_sd = 1.5, max = 42), fixed = FALSE),
+  truncation = trunc_opts(),
+  rt = rt_opts(prior = list(mean = 1.363283, sd = 0.2705766)),
+  gp = gp_opts(),
+  obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
+  stan = stan_opts(),
+  horizon = 0,
+  CrIs = c(0.5, 0.8, 0.9),
+  filter_leading_zeros = TRUE,
+  zero_threshold = Inf,
+  id = "estimate_infections",
+  verbose = interactive())[["summarised"]]
+
+write_csv(epinow2_res, here::here("scripts", "epinow2_oc_rt.csv"))
+
+write_csv(epiestim_res, path("results", "rt_estim", "rt_comparison_model_id=epinow2", ext = "csv"))
