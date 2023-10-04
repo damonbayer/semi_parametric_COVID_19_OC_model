@@ -40,7 +40,7 @@ for (i in 1:200) {
   ts <- ts[ts > 1 & ts <= (max(ts)-window+1)]
   te <- ts+(window-1)
 
-
+  set.seed(i)
   estimate_R(
     incid = simulation_data$total_cases,
     method = "uncertain_si",

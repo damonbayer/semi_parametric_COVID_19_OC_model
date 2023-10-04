@@ -62,7 +62,7 @@ args <- list(
   data = epidemia_data,
   iter = 4000,
   thin = 4,
-  seed = 225
+  seed = target_sim_id
 )
 
 args$inf <- epiinf(

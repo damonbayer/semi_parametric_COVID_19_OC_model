@@ -149,6 +149,7 @@ write_csv(summary_rtestimgamma, path("results", "rt_estim", "rt_comparison_model
 
 
 # epiestim ----------------------------------------------------------------
+set.seed(1234)
 mean_time = gq$dur_latent_days + gq$dur_infectious_days
 window = 1
 GI_mean = mean_time/7

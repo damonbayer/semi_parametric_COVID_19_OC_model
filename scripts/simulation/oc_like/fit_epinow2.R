@@ -78,7 +78,7 @@ for (i in 1:200) {
       rt = rt_opts(prior = list(mean = 1.363283, sd = 0.2705766)),
       gp = gp_opts(),
       obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
-      stan = stan_opts(),
+      stan = stan_opts(seed=i),
       horizon = 0,
       CrIs = c(0.5, 0.8, 0.95),
       filter_leading_zeros = TRUE,
