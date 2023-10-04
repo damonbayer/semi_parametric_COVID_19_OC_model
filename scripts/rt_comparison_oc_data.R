@@ -146,6 +146,8 @@ write_csv(summary_rtestimgamma, path("results", "rt_estim", "rt_comparison_model
 
 
 # epiestim ----------------------------------------------------------------
+set.seed(1234)
+
 mean_time = gq$dur_latent_days + gq$dur_infectious_days
 window = 1
 GI_mean = mean_time/7
@@ -212,7 +214,7 @@ epinow2_res <- estimate_infections(
   rt = rt_opts(prior = list(mean = 1.363283, sd = 0.2705766)),
   gp = gp_opts(),
   obs = obs_opts(week_effect = FALSE, scale = list(mean = 0.066, sd = 0.05), phi = c(sqrt(10), 0.6549291)),
-  stan = stan_opts(),
+  stan = stan_opts(seed=i),
   horizon = 0,
   CrIs = c(0.5, 0.8, 0.9),
   filter_leading_zeros = TRUE,
