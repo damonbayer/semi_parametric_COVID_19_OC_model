@@ -92,11 +92,16 @@ epidemia_metrics <-
 epiestim_metrics <- read_csv(path("results", "simulation", "oc_like", "epiestim_sim_rt_metrics", ext = "csv")) %>% 
   mutate(sim_id = as.character(sim_id))
 
+
+epinow2_metrics <- read_csv(path("results", "simulation", "oc_like", "epinow2_sim_rt_metrics", ext = "csv")) %>% 
+  mutate(sim_id = as.character(sim_id))
+
 all_metrics <-
   bind_rows(full_model_metrics,
             estimgamma_metrics,
             epidemia_metrics,
-            epiestim_metrics) %>%
+            epiestim_metrics,
+            epinow2_metrics) %>%
   mutate(method = fct_inorder(method))
 
 write_csv(all_metrics, "results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")

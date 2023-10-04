@@ -202,7 +202,6 @@ GI_var = 2*(mean_time/2)^2
 data_length <- dim(oc_data)[1]
 mean_delay = gq$dur_latent_days/7
 delay_var = 2*(mean_delay/2)^2
-
 date <- seq(ymd("2020-07-04"), ymd("2020-07-04") + ddays(data_length) -1, by = "days")
 
 epinow2_data <-  data.frame(
@@ -226,7 +225,6 @@ epinow2_res <- estimate_infections(
   zero_threshold = Inf,
   id = "estimate_infections",
   verbose = interactive())[["summarised"]]
-
 
 dplyr::select(time, name, value, .lower, .upper, .width, method)
 

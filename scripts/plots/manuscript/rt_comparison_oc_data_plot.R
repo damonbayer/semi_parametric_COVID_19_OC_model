@@ -57,6 +57,18 @@ rt_intervals <-
     read_csv("results/rt_estim/rt_comparison_model_id=estimnormal.csv") %>% 
       mutate(time = time - 1) %>% 
       left_join(time_date_key),
+    read_csv("results/rt_estim/rt_comparison_model_id=epinow2.csv") %>% 
+      filter(variable == "R") %>% 
+      mutate(time =  row_number()) %>% 
+      select(-date) %>% 
+      left_join(time_date_key) %>% 
+      mutate(name = "Rt",
+             method = "EpiNow2",
+             .width = 0.95) %>% 
+      rename(value = median,
+             .lower = lower_95,
+             .upper = upper_95) %>% 
+      select(time, name, value, .lower, .upper, .width, method, date),
     read_csv(posterior_generated_quantities_path) %>%
       filter(name == "Rₜ_t") %>%
       select(name, date, value, .lower, .upper, .width) %>%
