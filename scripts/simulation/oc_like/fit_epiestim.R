@@ -131,5 +131,5 @@ epiestim_rt_metrics <- map(epiestim_res, ~.x %>%
   bind_rows(.id = "sim_id") %>%
   mutate(method = "EpiEstim")
 
-write_csv(epiestim_rt_metrics, here::here("scripts", "simulation", "oc_like", "epiestim_sim_rt_metrics.csv"))
+write_csv(epiestim_rt_metrics, here::here("results", "simulation", "oc_like", "epiestim_sim_rt_metrics.csv"))
 

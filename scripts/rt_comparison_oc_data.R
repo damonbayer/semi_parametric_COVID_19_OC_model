@@ -186,7 +186,14 @@ epiestim_res <- epiestim_weekly[["R"]] %>%
                   rt_median = `Median(R)`,
                   rt_CI95l = `Quantile.0.025(R)`,
                   rt_CI95u = `Quantile.0.975(R)`) %>%
-    mutate(time  = t_start )
+    mutate(time  = t_start,
+           name = "Rt",
+           method = "epiestim",
+           .width = 0.95) %>% 
+    rename(value = rt_median,
+           .lower = rt_CI95l,
+           .upper = rt_CI95u) %>% 
+  dplyr::select(time, name, value, .lower, .upper, .width, method)
 
 
 epiestim_res <- read_csv("/Users/damon/Documents/semi_parametric_COVID_19_OC_model/results/rt_estim/rt_comparison_model_id=epiestim.csv")
@@ -227,7 +234,6 @@ epinow2_res <- estimate_infections(
   id = "estimate_infections",
   verbose = interactive())[["summarised"]]
 
-dplyr::select(time, name, value, .lower, .upper, .width, method)
 
 test = epinow2_res %>% filter(variable == "R") %>% pivot_longer(cols = -date)
 final_format_epinow2_res <- epinow2_res %>%
