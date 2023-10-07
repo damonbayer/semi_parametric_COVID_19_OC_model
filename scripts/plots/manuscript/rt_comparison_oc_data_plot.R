@@ -45,11 +45,11 @@ posterior_generated_quantities_path <-
 rt_intervals <-
   bind_rows(
     read_csv("results/rt_estim/rt_comparison_model_id=epiestim.csv") %>% 
-      mutate(time = time - 1,
-             name = "Rt",
-             method = "EpiEstim",
-             .width = 0.95) %>% 
-      select(time, name, value = rt_median, .lower = rt_CI95l, .upper = rt_CI95u, .width, method) %>% 
+      # mutate(time = time - 1,
+      #        name = "Rt",
+      #        method = "EpiEstim",
+      #        .width = 0.95) %>% 
+      # select(time, name, value = rt_median, .lower = rt_CI95l, .upper = rt_CI95u, .width, method) %>% 
       left_join(time_date_key),
     read_csv("results/rt_estim/rt_comparison_model_id=estimgamma.csv") %>% 
       mutate(time = time - 1) %>% 

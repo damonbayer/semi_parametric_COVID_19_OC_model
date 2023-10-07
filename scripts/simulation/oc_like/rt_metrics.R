@@ -105,3 +105,9 @@ all_metrics <-
   mutate(method = fct_inorder(method))
 
 write_csv(all_metrics, "results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
+
+all_metrics <- read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
+unique(all_metrics$method)
+all_metrics %>% filter(method != "EpiEstim" & method != "Epinow2") %>% bind_rows(epiestim_metrics,
+                                                                                 epinow2_metrics) %>% 
+  write_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
