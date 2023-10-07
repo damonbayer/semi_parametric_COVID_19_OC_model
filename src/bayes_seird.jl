@@ -4,7 +4,7 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   (0.0, obstimes[end]),
   ones(4))
 
-@model function bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests::Bool, use_seroprev::Bool, constant_R0::Bool, constant_alpha::Bool, constant_IFR::Bool, DEAlgorithm::DEAlgorithm, abstol, reltol)
+@model function bayes_seird(prob, data_new_deaths, data_new_cases, tests, data_seroprev_cases, seroprev_tests, obstimes, seroprev_times, param_change_times, use_tests::Bool, use_seroprev::Bool, use_deaths::Bool, constant_R0::Bool, constant_alpha::Bool, constant_IFR::Bool, DEAlgorithm::DEAlgorithm, abstol, reltol)
   l_incidence = length(data_new_deaths)
 
   if use_seroprev
@@ -31,13 +31,17 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   dur_latent_non_centered ~ Normal()
   dur_infectious_non_centered ~ Normal()
   ϕ_cases_non_centered ~ Normal()
-  ϕ_deaths_non_centered ~ Normal()
+  if use_deaths
+        ϕ_deaths_non_centered ~ Normal()
+  end
   ρ_death_non_centered ~ Normal()
 
   # Transformations
   γ = exp(-(dur_latent_non_centered * dur_latent_non_centered_sd + dur_latent_non_centered_mean))
   ν = exp(-(dur_infectious_non_centered * dur_infectious_non_centered_sd + dur_infectious_non_centered_mean))
-  ρ_death = logistic(ρ_death_non_centered * ρ_death_non_centered_sd + ρ_death_non_centered_mean)
+  if use_deaths
+    ρ_death = logistic(ρ_death_non_centered * ρ_death_non_centered_sd + ρ_death_non_centered_mean)
+  end
 
   if use_tests
     ϕ_cases_bb = exp(ϕ_cases_non_centered * ϕ_cases_bb_non_centered_sd + ϕ_cases_bb_non_centered_mean)
@@ -45,7 +49,9 @@ prob = ODEProblem{true}(seirdc_log_ode!,
     ϕ_cases_nb = exp(ϕ_cases_non_centered * ϕ_cases_nb_non_centered_sd + ϕ_cases_nb_non_centered_mean)
   end
 
-  ϕ_deaths = exp(ϕ_deaths_non_centered * ϕ_deaths_non_centered_sd + ϕ_deaths_non_centered_mean)
+  if use_deaths
+    ϕ_deaths = exp(ϕ_deaths_non_centered * ϕ_deaths_non_centered_sd + ϕ_deaths_non_centered_mean)
+  end
 
   if !constant_R0
     σ_R0_non_centered = R0_params_non_centered[2]
@@ -118,8 +124,9 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   sol_new_deaths = sol_reg_scale_array[5, 2:end] - sol_reg_scale_array[5, 1:(end-1)]
   sol_new_cases = sol_reg_scale_array[6, 2:end] - sol_reg_scale_array[6, 1:(end-1)]
 
-  deaths_mean = max.(ρ_death * sol_new_deaths, 0.0)
-
+  if use_deaths
+    deaths_mean = max.(ρ_death * sol_new_deaths, 0.0)
+  end
   if use_tests
     cases_bb_mean = max.(logistic.(α_t_values_with_init .+ logit.(sol_new_cases / popsize)), 0.0)
   else
@@ -132,7 +139,9 @@ prob = ODEProblem{true}(seirdc_log_ode!,
   end
 
   for i in 1:l_incidence
-    data_new_deaths[i] ~ NegativeBinomial2(deaths_mean[i], ϕ_deaths) # In exploratory phase of MCMC, sometimes you get weird numerical errors
+    if use_deaths
+      data_new_deaths[i] ~ NegativeBinomial2(deaths_mean[i], ϕ_deaths) # In exploratory phase of MCMC, sometimes you get weird numerical errors
+    end
     if use_tests
       data_new_cases[i] ~ BetaBinomial2(tests[i], cases_bb_mean[i], ϕ_cases_bb)
     else
@@ -163,18 +172,21 @@ prob = ODEProblem{true}(seirdc_log_ode!,
     prevalence=sol_reg_scale_array[2, :] + sol_reg_scale_array[3, :],
     dur_latent_days=time_interval_in_days / γ,
     dur_infectious_days=time_interval_in_days / ν,
-    ϕ_deaths=ϕ_deaths,
-    ρ_death=ρ_death,
-    deaths_mean=deaths_mean,
     β_t=β_t,
     R₀_t=R₀_t,
     Rₜ_t=R₀_t .* S[1:(end-1)] / popsize,
     IFR_t=vcat(IFR_init, IFR_t_values_no_init))
 
-  if use_tests
-    gq = merge(gq_base, (α_t=α_t_values_with_init, ϕ_cases_bb=ϕ_cases_bb, cases_bb_mean=cases_bb_mean, cases_mean=tests .* cases_bb_mean))
+  if use_deaths
+    gq = merge(gq_base, (ϕ_deaths=ϕ_deaths, ρ_death=ρ_death, deaths_mean=deaths_mean))
   else
-    gq = merge(gq_base, (ρ_cases_t=ρ_cases_t_values_with_init, ϕ_cases_nb=ϕ_cases_nb, cases_nb_mean=cases_nb_mean, cases_mean=cases_nb_mean))
+    gq = gq_base
+  end
+
+  if use_tests
+    gq = merge(gq, (α_t=α_t_values_with_init, ϕ_cases_bb=ϕ_cases_bb, cases_bb_mean=cases_bb_mean, cases_mean=tests .* cases_bb_mean))
+  else
+    gq = merge(gq, (ρ_cases_t=ρ_cases_t_values_with_init, ϕ_cases_nb=ϕ_cases_nb, cases_nb_mean=cases_nb_mean, cases_mean=cases_nb_mean))
   end
 
   if !constant_R0

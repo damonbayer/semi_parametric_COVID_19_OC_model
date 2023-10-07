@@ -62,7 +62,13 @@ my_labeller <-
     "σ_ρ_cases" = "$\\sigma^2_{\\rho^Y}",
     "ϕ_cases_bb" = "$\\phi_C$",
     "ϕ_cases_nb" = "$\\phi_Y$",
-    "ϕ_deaths" = "$\\phi_D$") %>%
+    "ϕ_deaths" = "$\\phi_D$",
+    "1" = "True Model",
+    "2" = "No Deaths",
+    "3" = "No Tests",
+    "4" = "No Seroprevalence",
+    "5" = "Wide Latent and Infectious Duration"
+    ) %>%
   TeX(output = "expression")
 
 my_labeller_fn <- as_labeller(function(string) my_labeller[string], label_parsed)

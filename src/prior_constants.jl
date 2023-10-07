@@ -51,13 +51,21 @@ const I_EI_non_centered_sd = 0.03
 # dur_latent_non_centered_sd = 0.25
 # https://academic.oup.com/cid/advance-article/doi/10.1093/cid/ciab746/6359063
 const dur_latent_non_centered_mean = -0.25
-const dur_latent_non_centered_sd = 0.1
+if use_wide_priors
+  const dur_latent_non_centered_sd = 0.1
+else
+  const dur_latent_non_centered_sd = 0.5
+end
 
 # dur_infectious_non_centered_mean = log(5 / 7)
 # dur_infectious_non_centered_sd = 0.2
 # https://bmjopen.bmj.com/content/10/8/e039856.abstract
 const dur_infectious_non_centered_mean = 0.15
-const dur_infectious_non_centered_sd = 0.1
+if use_wide_priors
+  const dur_infectious_non_centered_sd = 0.1
+else
+  const dur_infectious_non_centered_sd = 0.5
+end
 const ρ_death_non_centered_mean = 2.3
 const ρ_death_non_centered_sd = 0.2
 
