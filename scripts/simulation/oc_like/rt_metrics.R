@@ -2,6 +2,7 @@
 library(tidyverse)
 library(fs)
 source("src/rt_comparison_functions.R")
+source("src/plot_functions.R")
 
 rt_truth <-
   read_csv("data/simulation/oc_like/true_generated_quantities.csv") %>%
@@ -13,19 +14,23 @@ rt_truth <-
   ) %>%
   select(time, Rt = value)
 
+sensitivity_model_table <- read_csv("scripts/simulation/oc_like/sensitivity_analysis/sensitivity_model_table.csv")
+
 full_model_cis <-
   tibble(full_path = dir_ls("results/simulation/oc_like/tidy_posterior_generated_quantities")) %>%
   mutate(sim_id = full_path %>%
            str_extract("(?<=sim_id=)\\d+") %>%
            as.numeric()) %>%
   arrange(sim_id) %>%
+  left_join(sensitivity_model_table) %>% 
   mutate(ci = map(full_path,
                   ~read_csv(.) %>%
                     filter(name == "Rₜ_t",
                            .width == 0.95))) %>%
   select(-full_path) %>%
-  unnest(ci) %>%
-  mutate(method = "full")
+  unnest(ci) %>% 
+  mutate(method = as.character(my_labeller[as.character(model_design)])) %>%
+  select(sim_id, name, time, value, .lower, .upper, .width, .interval, method)
 
 # ISAAC TO DO: Rt estim and epidemia reuslts ------------------------------
 rt_estim_cis <-
@@ -66,8 +71,11 @@ full_model_metrics <-
   group_by(method, sim_id) %>%
   group_map(~ rt_metrics(.x, .x$value, .x$.upper, .x$.lower)) %>%
   bind_rows(.id = "sim_id") %>%
-  mutate(method = "Full Model") %>%
-  as_tibble()
+  as_tibble() %>% 
+  mutate(sim_id = as.numeric(sim_id)) %>% 
+  left_join(sensitivity_model_table) %>% 
+  mutate(method = as.character(my_labeller[as.character(model_design)])) %>% 
+  select(sim_id, mean_dev, MCIW, mean_env, MASV, true_MASV, method)
 
 estimgamma_metrics <-
   rt_estim_cis %>%
@@ -105,9 +113,3 @@ all_metrics <-
   mutate(method = fct_inorder(method))
 
 write_csv(all_metrics, "results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
-
-all_metrics <- read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
-unique(all_metrics$method)
-all_metrics %>% filter(method != "EpiEstim" & method != "Epinow2") %>% bind_rows(epiestim_metrics,
-                                                                                 epinow2_metrics) %>% 
-  write_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")

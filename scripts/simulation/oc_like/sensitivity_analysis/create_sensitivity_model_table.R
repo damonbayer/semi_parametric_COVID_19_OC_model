@@ -15,7 +15,9 @@ model_table <-
 
 write_csv(model_table, path("scripts", "simulation", "oc_like", "sensitivity_analysis", "sensitivity_model_table", ext = "csv"))
 
-
+model_table %>% 
+  select(-sim_id, -data_id) %>% 
+  distinct()
 
 model_table %>% 
   filter(model_design >= 2) %>% 

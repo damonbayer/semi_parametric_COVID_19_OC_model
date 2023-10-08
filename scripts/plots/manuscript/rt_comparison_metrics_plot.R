@@ -3,9 +3,9 @@ source("src/plot_functions.R")
 
 all_metrics <-
   read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv") %>%
+  mutate(method = if_else(method == "Wide Latent and Infectious\nDuration Priors",  "Wide Latent and \nInfectious Duration Priors", method)) %>% 
   mutate(method = method |> 
-           fct_inorder() |> 
-           fct_recode(`True Model` = "Full Model")) %>% 
+           fct_inorder()) %>% 
   filter(method != "Rt-estim-gamma")
 
 envelope_plot <-
@@ -39,7 +39,7 @@ masv_plot <-
   labs(title = "MASV", x = "Method", y = "MASV") +
   theme_minimal_grid()
 
-rt_comparison_metrics_plot <- plot_grid(envelope_plot, mciw_plot, abs_dev_plot, masv_plot, align = "hv", nrow = 2, ncol = 2)
+rt_comparison_metrics_plot <- plot_grid(envelope_plot, mciw_plot, abs_dev_plot, masv_plot, align = "hv", nrow = 4, ncol = 1)
 
 save_plot(filename = path(figures_dir, "rt_comparison_metrics_plot", ext = "pdf"),
-          plot = rt_comparison_metrics_plot, ncol = 2, nrow = 2)
+          plot = rt_comparison_metrics_plot, ncol = 1, nrow = 4, base_asp = 4)

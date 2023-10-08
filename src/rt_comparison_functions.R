@@ -7,9 +7,9 @@ library(truncnorm)
 library(rstan)
 library(lubridate)
 library(brms)
-library(epidemia)
-library(rstanarm)
-library(sdprisk)
+# library(epidemia)
+# library(rstanarm)
+# library(sdprisk)
 library(parallelly)
 
 options(
