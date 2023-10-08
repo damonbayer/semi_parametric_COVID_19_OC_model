@@ -63,11 +63,11 @@ my_labeller <-
     "ϕ_cases_bb" = "$\\phi_C$",
     "ϕ_cases_nb" = "$\\phi_Y$",
     "ϕ_deaths" = "$\\phi_D$",
-    "1" = "True Model",
+    "1" = "Full Model",
     "2" = "No Deaths",
     "3" = "No Tests",
     "4" = "No Seroprevalence",
-    "5" = "Wide Latent and Infectious Duration"
+    "5" = "Wide Latent and Infectious\nDuration Priors"
     ) %>%
   TeX(output = "expression")
 

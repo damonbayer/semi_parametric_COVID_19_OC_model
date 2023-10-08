@@ -82,26 +82,26 @@ generated_quantities_simulation_time_varying_coverage_plot <-
   ) +
   my_theme
 
-generated_quantities_simulation_scalar_shrinkage_sensitivity_plot <- 
+
+generated_quantities_simulation_time_varying_coverage_sensitivity_plot <- 
   coverage_results %>%
-  filter(.width == 0.8) %>%
+  # filter(!(name == "IFR_t" & model_design == 2)) %>% 
   filter(!is.na(time)) %>%
-  filter(name %in% c("S", "E", "I", "R", "D")) %>%
-  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>%
+  filter(.width == 0.8) %>%
+  filter(str_ends(name, "_t")) %>%
   ggplot(aes(time, mean, color = factor(model_design), ymin = lower, ymax = upper)) +
-  facet_wrap(~name) +
+  facet_wrap(~name, labeller = my_labeller_fn) +
   geom_line() +
   geom_point() +
   geom_errorbar() +
-  geom_hline(yintercept = 0.8, linetype = "dashed") +
   scale_color_discrete(name = "Model", labels = my_labeller) +
+  geom_hline(yintercept = 0.8, linetype = "dashed") +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Coverage Properties of Compartment Sizes",
+  ggtitle("Posterior Coverage Properties of Time-Varying Parameters",
           subtitle = "Mean and 95% Confidence Interval from different models, 200 simulations each"
   ) +
   my_theme
-
 # Compartment Coverage ----------------------------------------------------
 generated_quantities_simulation_compartment_coverage_plot <-
   coverage_results %>%
@@ -125,19 +125,20 @@ generated_quantities_simulation_compartment_coverage_plot <-
 
 generated_quantities_simulation_compartment_coverage_sensitivity_plot <- 
   coverage_results %>%
-  filter(!is.na(time)) %>%
   filter(.width == 0.8) %>%
-  filter(str_ends(name, "_t")) %>%
+  filter(!is.na(time)) %>%
+  filter(name %in% c("S", "E", "I", "R", "D")) %>%
+  mutate(name = fct_relevel(name, c("S", "E", "I", "R", "D"))) %>%
   ggplot(aes(time, mean, color = factor(model_design), ymin = lower, ymax = upper)) +
-  facet_wrap(~name, labeller = my_labeller_fn) +
+  facet_wrap(~name) +
   geom_line() +
   geom_point() +
   geom_errorbar() +
-  scale_color_discrete(name = "Model", labels = my_labeller) +
   geom_hline(yintercept = 0.8, linetype = "dashed") +
+  scale_color_discrete(name = "Model", labels = my_labeller) +
   scale_y_continuous(name = "Coverage", label = percent) +
   scale_x_continuous("Time") +
-  ggtitle("Posterior Coverage Properties of Time-Varying Parameters",
+  ggtitle("Posterior Coverage Properties of Compartment Sizes",
           subtitle = "Mean and 95% Confidence Interval from different models, 200 simulations each"
   ) +
   my_theme
@@ -220,7 +221,7 @@ c(
   ))
 
 c(
-"generated_quantities_simulation_scalar_shrinkage_sensitivity_plot",
+"generated_quantities_simulation_time_varying_coverage_sensitivity_plot",
 "generated_quantities_simulation_compartment_coverage_sensitivity_plot",
 "generated_quantities_simulation_scalar_coverage_sensitivity_plot") %>% 
   walk(~ save_plot(
