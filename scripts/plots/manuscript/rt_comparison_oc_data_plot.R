@@ -85,14 +85,14 @@ rt_comparison_oc_data_plot <-
   rt_intervals %>% 
   filter(method != "Rt-estim-gamma", time > 0) %>% 
   filter(.width == 0.95) %>% 
-  ggplot(aes(x = date, y = value, ymin = .lower, ymax = .upper, fill = method)) +
-  geom_lineribbon(alpha = 0.5) +
+  ggplot(aes(x = date, y = value, ymin = .lower, ymax = .upper)) +
+  facet_wrap(~method) +
+  geom_lineribbon(fill = "#3182bd") +
   scale_y_continuous(name = my_labeller["Rₜ_t"]) +
-  ggtitle("Posterior Effective Reproduction Number",
+  ggtitle("Posterior Effective Reproduction Number Comparison",
           subtitle = "95% Credible Intervals") +
   geom_hline(yintercept = 1, linetype = "dashed") +
   scale_x_date(name = "Date") +
-  scale_fill_discrete(name = "Method", label = str_to_title) +
   theme(legend.position = "bottom")
 
 save_plot(filename = path(figures_dir, "rt_comparison_oc_data_plot", ext = "pdf"),
