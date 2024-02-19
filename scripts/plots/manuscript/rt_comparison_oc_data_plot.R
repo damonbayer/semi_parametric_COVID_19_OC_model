@@ -96,4 +96,4 @@ rt_comparison_oc_data_plot <-
   theme(legend.position = "bottom")
 
 save_plot(filename = path(figures_dir, "rt_comparison_oc_data_plot", ext = "pdf"),
-          plot = rt_comparison_oc_data_plot)
+          plot = rt_comparison_oc_data_plot, ncol = 2, nrow = 2)
