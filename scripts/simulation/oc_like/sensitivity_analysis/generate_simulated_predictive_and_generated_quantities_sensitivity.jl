@@ -1,6 +1,6 @@
 # Generate posterior predictive and posterior generated quantities for models fit to simulated data
 sim_id = isempty(ARGS) ? 1 : parse(Int64, ARGS[1])
-
+sim_id = 417
 using Revise
 using CSV
 using DataFrames
@@ -28,10 +28,7 @@ mkpath(simulation_results_dir())
 data_id = model_dict["data_id"]
 simulated_data = load(simulation_data_dir("simulated_data.jld2"))["simulated_data"][data_id,:,1]
 
-mkpath(simulation_results_dir("posterior_predictive"))
-mkpath(simulation_results_dir("posterior_generated_quantities"))
-mkpath(simulation_results_dir("duration"))
-
+posterior_samples = load("/Users/damon/Desktop/posterior_samples_sim_id=417.jld2")["posterior_samples"]
 
 posterior_samples = load(simulation_results_dir("posterior_samples", savename("posterior_samples", simulated_dict, "jld2")))["posterior_samples"]
 
@@ -74,4 +71,7 @@ posterior_predictive = predict(model_predict, augmented_posterior_samples)
 CSV.write(simulation_results_dir("posterior_predictive", savename("posterior_predictive", simulated_dict, "csv")), DataFrame(posterior_predictive))
 
 posterior_generated_quantities = hcat(Chains(generated_quantities(model_generated_quantities, augmented_posterior_samples)), getlogp_chain(posterior_samples))
+
+"ϕ_deaths" ∈ names(posterior_generated_quantities)
+
 CSV.write(simulation_results_dir("posterior_generated_quantities", savename("posterior_generated_quantities", simulated_dict, "csv")), DataFrame(posterior_generated_quantities))

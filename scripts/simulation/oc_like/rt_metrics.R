@@ -113,3 +113,18 @@ all_metrics <-
   mutate(method = fct_inorder(method))
 
 write_csv(all_metrics, "results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
+all_metrics <- read_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
+
+
+all_metrics %>% pull(method) %>% unique()
+
+bind_rows(full_model_metrics,
+all_metrics %>% 
+  filter(!(method %in% 
+           c("True Model",
+             "No Deaths",
+             "No Tests",
+             "No Seroprevalence",
+             "Wide Latent and Infectious\nDuration Priors"))
+  )) %>% 
+  write_csv("results/simulation/oc_like/simulated_rt_comparison_all_metrics.csv")
